@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKAY API - Professional Dashboard</title>
+    <style>
+        :root {
+            --bg: #060606;
+            --card: #0d0d0d;
+            --card2: #131313;
+            --green: #00e676;
+            --red: #ff1744;
+            --cyan: #00e5ff;
+            --yellow: #ffea00;
+            --gold: #ffd700;
+            --purple: #d500f9;
+            --border: #1e1e1e;
+            --text: #b0b0b0;
+            --text2: #707070;
+            --sidebar-w: 280px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', 'Courier New', monospace; min-height: 100vh; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ============ TOP BAR ============ */
+        .topbar {
+            background: var(--card); border-bottom: 1px solid var(--border);
+            padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .hamburger {
+            background: none; border: none; color: #fff; font-size: 26px;
+            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: all .2s;
+        }
+        .hamburger:hover { background: var(--card2); }
+        .topbar-logo { font-size: 22px; color: var(--green); font-weight: 800; letter-spacing: 3px; }
+        .topbar-logo span { color: var(--cyan); }
+        .topbar-right { display: flex; align-items: center; gap: 18px; }
+        .topbar-notif {
+            position: relative; cursor: pointer; font-size: 20px; color: var(--text2);
+            transition: all .2s;
+        }
+        .topbar-notif:hover { color: #fff; }
+        .notif-badge {
+            position: absolute; top: -6px; right: -8px; background: var(--red);
+            color: #fff; font-size: 9px; width: 18px; height: 18px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .topbar-user {
+            display: flex; align-items: center; gap: 10px; color: #fff;
+            font-size: 13px; cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: all .2s;
+        }
+        .topbar-user:hover { background: var(--card2); }
+        .topbar-avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--green);
+            display: flex; align-items: center; justify-content: center; color: #000;
+            font-weight: bold; font-size: 16px;
+        }
+        .topbar-limit { font-size: 10px; color: var(--text2); }
+
+        /* ============ SIDEBAR ============ */
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 60; display: none; transition: opacity .3s;
+        }
+        .sidebar-overlay.show { display: block; }
+        .sidebar {
+            position: fixed; top: 0; left: calc(-1 * var(--sidebar-w));
+            width: var(--sidebar-w); height: 100%; background: var(--card);
+            border-right: 1px solid var(--border); z-index: 70; transition: left .3s ease;
+            display: flex; flex-direction: column;
+        }
+        .sidebar.show { left: 0; }
+        .sidebar-header {
+            padding: 22px 20px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .sidebar-header h3 { color: #fff; font-size: 17px; letter-spacing: 1px; }
+        .sidebar-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+        .sidebar-user {
+            padding: 20px; border-bottom: 1px solid var(--border); text-align: center;
+        }
+        .sidebar-avatar {
+            width: 55px; height: 55px; border-radius: 50%; background: var(--green);
+            margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: #000;
+        }
+        .sidebar-username { color: #fff; font-size: 14px; font-weight: bold; }
+        .sidebar-role { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; margin: 4px 0; }
+        .sidebar-role.free { color: var(--cyan); } .sidebar-role.vip { color: var(--gold); }
+        .sidebar-role.admin { color: var(--purple); } .sidebar-role.owner { color: var(--red); }
+        .sidebar-progress { margin-top: 10px; }
+        .sidebar-progress-text { font-size: 10px; color: var(--text2); margin-bottom: 4px; }
+        .progress-bar { background: var(--border); border-radius: 10px; height: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--green); border-radius: 10px; transition: width .5s; }
+        .sidebar-nav { flex: 1; padding: 15px; overflow-y: auto; }
+        .sidebar-nav a {
+            display: flex; align-items: center; gap: 12px; padding: 13px 16px;
+            color: var(--text2); text-decoration: none; border-radius: 10px;
+            margin-bottom: 6px; font-size: 13px; transition: all .2s; position: relative;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background: var(--card2); color: #fff; }
+        .sidebar-nav a .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+        .sidebar-nav a .nav-badge {
+            position: absolute; right: 12px; background: var(--red); color: #fff;
+            font-size: 9px; padding: 2px 8px; border-radius: 10px;
+        }
+        .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border); }
+        .sidebar-footer a {
+            display: flex; align-items: center; gap: 10px; color: var(--text2);
+            text-decoration: none; font-size: 12px; padding: 8px 0; transition: all .2s;
+        }
+        .sidebar-footer a:hover { color: #fff; }
+
+        /* ============ MAIN CONTENT ============ */
+        .main { padding: 28px; max-width: 1300px; margin: 0 auto; }
+        .section { display: none; animation: fadeIn .4s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .section-title { font-size: 24px; color: #fff; margin-bottom: 28px; font-weight: 700; letter-spacing: 1px; }
+        .section-subtitle { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+
+        /* ============ API CARDS ============ */
+        .api-search {
+            width: 100%; padding: 14px 18px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; color: #fff; margin-bottom: 22px; outline: none; font-size: 14px;
+            transition: all .3s;
+        }
+        .api-search:focus { border-color: var(--green); box-shadow: 0 0 20px rgba(0,230,118,0.1); }
+        .api-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+        .api-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+            padding: 22px; transition: all .3s; position: relative; overflow: hidden;
+        }
+        .api-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: transparent; transition: all .3s;
+        }
+        .api-card:hover { border-color: var(--green); transform: translateY(-4px); box-shadow: 0 15px 40px rgba(0,230,118,0.08); }
+        .api-card:hover::before { background: var(--green); }
+        .api-card.locked { opacity: 0.4; pointer-events: none; filter: grayscale(0.5); }
+        .api-card .api-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .api-card .api-icon { font-size: 34px; }
+        .api-card .api-name { color: #fff; font-size: 15px; font-weight: 700; }
+        .api-card .api-desc { color: var(--text2); font-size: 11px; margin-bottom: 14px; line-height: 1.6; }
+        .api-card .api-url-box {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 10px 14px; font-size: 10px; color: var(--green); word-break: break-all;
+            margin-bottom: 12px; cursor: pointer; user-select: all; font-family: 'Courier New', monospace;
+            transition: all .2s;
+        }
+        .api-card .api-url-box:hover { border-color: var(--cyan); }
+        .api-card .api-actions { display: flex; gap: 8px; }
+        .api-card .btn-copy {
+            flex: 1; background: transparent; border: 1px solid var(--cyan); color: var(--cyan);
+            padding: 8px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600;
+            transition: all .2s; text-align: center;
+        }
+        .api-card .btn-copy:hover { background: var(--cyan); color: #000; }
+        .api-card .btn-fav {
+            background: transparent; border: 1px solid var(--yellow); color: var(--yellow);
+            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all .2s;
+        }
+        .api-card .btn-fav:hover { background: var(--yellow); color: #000; }
+        .api-card .btn-fav.active { background: var(--yellow); color: #000; }
+        .maintenance-badge {
+            position: absolute; top: 14px; right: 14px; background: var(--red);
+            color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 20px;
+            font-weight: 600; letter-spacing: 1px; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+        /* ============ PROFILE ============ */
+        .profile-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 30px; max-width: 500px; margin: 0 auto; text-align: center;
+        }
+        .profile-avatar {
+            width: 80px; height: 80px; border-radius: 50%; background: var(--green);
+            margin: 0 auto 18px; display: flex; align-items: center; justify-content: center;
+            font-size: 36px; color: #000;
+        }
+        .profile-name { color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 4px; }
+        .profile-role { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .profile-tg { color: var(--text2); font-size: 12px; margin-bottom: 20px; }
+        .profile-stats { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
+        .profile-stat { text-align: center; }
+        .profile-stat-value { color: #fff; font-size: 24px; font-weight: bold; }
+        .profile-stat-label { color: var(--text2); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .favorites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 20px; }
+        .favorite-item {
+            background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px; text-align: center; cursor: pointer; transition: all .2s;
+        }
+        .favorite-item:hover { border-color: var(--yellow); }
+
+        /* ============ ADMIN ============ */
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; }
+        .admin-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+            padding: 22px; transition: all .3s;
+        }
+        .admin-card:hover { border-color: var(--purple); }
+        .admin-card h3 { color: #fff; font-size: 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .admin-card label { display: block; color: var(--text2); font-size: 10px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .admin-card input, .admin-card select, .admin-card textarea {
+            width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 8px; color: #fff; margin-bottom: 10px; outline: none; font-size: 13px;
+            transition: all .2s;
+        }
+        .admin-card input:focus, .admin-card textarea:focus { border-color: var(--cyan); }
+        .admin-card textarea { height: 70px; resize: vertical; }
+        .admin-card .btn-row { display: flex; gap: 8px; }
+        .admin-card .btn-row button { flex: 1; }
+        .btn { padding: 10px 16px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; transition: all .2s; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-green { background: var(--green); color: #000; }
+        .btn-red { background: var(--red); color: #fff; }
+        .btn-cyan { background: var(--cyan); color: #000; }
+        .btn-gold { background: var(--gold); color: #000; }
+        .btn-purple { background: var(--purple); color: #fff; }
+        .user-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .user-table th, .user-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 11px; }
+        .user-table th { color: var(--text2); text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
+        .user-table td { color: #fff; }
+        .user-table .badge { padding: 3px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; }
+        .badge-free { background: var(--cyan); color: #000; }
+        .badge-vip { background: var(--gold); color: #000; }
+        .badge-admin { background: var(--purple); color: #fff; }
+        .badge-owner { background: var(--red); color: #fff; }
+        .badge-banned { background: var(--red); color: #fff; }
+
+        /* ============ NOTIFICATIONS DROPDOWN ============ */
+        .notif-dropdown {
+            position: absolute; top: 100%; right: 0; width: 320px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            z-index: 90; display: none; max-height: 400px; overflow-y: auto;
+        }
+        .notif-dropdown.show { display: block; }
+        .notif-dropdown-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .notif-dropdown-header h4 { color: #fff; font-size: 13px; }
+        .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: all .2s; }
+        .notif-item:hover { background: var(--card2); }
+        .notif-item.unread { border-left: 3px solid var(--green); }
+        .notif-item .notif-time { color: var(--text2); font-size: 10px; margin-top: 4px; }
+
+        /* ============ TOAST ============ */
+        .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+        .toast {
+            background: var(--card); border: 1px solid var(--green); padding: 14px 20px;
+            border-radius: 10px; color: #fff; font-size: 13px; animation: slideIn .3s ease;
+            min-width: 280px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .toast.error { border-color: var(--red); }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .api-grid { grid-template-columns: 1fr; }
+            .admin-grid { grid-template-columns: 1fr; }
+            .main { padding: 16px; }
+            .topbar { padding: 10px 14px; }
+            .topbar-logo { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ TOP BAR ============ -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger" onclick="toggleSidebar()">☰</button>
+            <div class="topbar-logo">SKAY<span>API</span></div>
+        </div>
+        <div class="topbar-right" id="topbarRight" style="display:none">
+            <div class="topbar-notif" onclick="toggleNotifications()">
+                🔔
+                <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-dropdown-header"><h4>Bildirimler</h4><span style="font-size:10px;color:var(--cyan);cursor:pointer" onclick="clearNotifications()">Temizle</span></div>
+                    <div id="notifList"><p style="padding:20px;text-align:center;color:var(--text2)">Bildirim yok</p></div>
+                </div>
+            </div>
+            <div class="topbar-user" id="topbarUserInfo">
+                <div class="topbar-avatar" id="topAvatar">?</div>
+                <div>
+                    <div id="topName" style="font-size:12px">Kullanıcı</div>
+                    <div class="topbar-limit" id="topLimit"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SIDEBAR OVERLAY ============ -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- ============ SIDEBAR ============ -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Menü</h3>
+            <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-avatar" id="sideAvatar">?</div>
+            <div class="sidebar-username" id="sideName">Kullanıcı</div>
+            <div class="sidebar-role free" id="sideRole">FREE</div>
+            <div class="sidebar-progress">
+                <div class="sidebar-progress-text" id="sideProgressText">0 / 5 API</div>
+                <div class="progress-bar"><div class="progress-fill" id="sideProgress" style="width:0%"></div></div>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <a href="#" class="active" data-section="apis" onclick="navigateTo('apis')">
+                <span class="nav-icon">📡</span> API'ler
+            </a>
+            <a href="#" data-section="profile" onclick="navigateTo('profile')">
+                <span class="nav-icon">👤</span> Profilim
+            </a>
+            <a href="#" data-section="favorites" onclick="navigateTo('favorites')">
+                <span class="nav-icon">⭐</span> Favorilerim
+                <span class="nav-badge" id="favCount">0</span>
+            </a>
+            <a href="#" data-section="messages" onclick="navigateTo('messages')">
+                <span class="nav-icon">💬</span> Mesajlar
+                <span class="nav-badge" id="msgBadge" style="display:none">0</span>
+            </a>
+            <a href="#" data-section="admin" id="adminMenuLink" style="display:none" onclick="navigateTo('admin')">
+                <span class="nav-icon">⚙️</span> Admin Panel
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="https://t.me/+FBDRT5Nsc4I4ZWRk" target="_blank">📢 Telegram Kanal</a>
+            <a href="http://t.me/SkayApiVerificationBot" target="_blank">🤖 Doğrulama Botu</a>
+            <a href="#" onclick="logout()">🚪 Çıkış Yap</a>
+        </div>
+    </div>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <div class="main">
+
+        <!-- LOGIN SECTION -->
+        <div class="section active" id="loginSection">
+            <div style="max-width:420px;margin:80px auto;text-align:center">
+                <div style="font-size:60px;margin-bottom:20px">🔐</div>
+                <h1 style="color:#fff;font-size:28px;margin-bottom:8px">SKAY API</h1>
+                <p style="color:var(--text2);margin-bottom:35px">Profesyonel API Yönetim Paneli</p>
+
+                <!-- Login Form -->
+                <div id="loginForm">
+                    <input type="text" id="loginUser" placeholder="Kullanıcı adı" style="width:100%;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;margin-bottom:14px;outline:none;font-size:14px">
+                    <input type="password" id="loginPass" placeholder="Şifre" style="width:100%;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;margin-bottom:14px;outline:none;font-size:14px">
+                    <div id="loginCodeBox" style="display:none">
+                        <input type="text" id="loginCode" placeholder="Telegram doğrulama kodu" style="width:100%;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;margin-bottom:14px;outline:none;font-size:14px">
+                    </div>
+                    <button class="btn btn-green" style="width:100%;padding:15px;font-size:14px" onclick="login()">▸ GİRİŞ YAP</button>
+                    <p style="margin-top:18px;font-size:12px;color:var(--text2)">
+                        Hesabın yok mu? <a href="#" style="color:var(--cyan);text-decoration:none;font-weight:600" onclick="showRegisterForm()">Kayıt ol</a>
+                    </p>
+                </div>
+
+                <!-- Register Form -->
+                <div id="registerForm" style="display:none">
+                    <input type="text" id="regUser" placeholder="Kullanıcı adı" style="width:100%;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;margin-bottom:14px;outline:none;font-size:14px">
+                    <input type="password" id="regPass" placeholder="Şifre" style="width:100%;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;margin-bottom:14px;outline:none;font-size:14px">
+                    <input type="password" id="regPass2" placeholder="Şifre tekrar" style="width:100%;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;margin-bottom:14px;outline:none;font-size:14px">
+                    <input type="text" id="regTg" placeholder="@telegram kullanıcı adın" style="width:100%;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;margin-bottom:14px;outline:none;font-size:14px">
+                    <div id="regCodeBox" style="display:none">
+                        <input type="text" id="regCode" placeholder="Doğrulama kodu (6 hane)" style="width:100%;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:#fff;margin-bottom:14px;outline:none;font-size:14px">
+                    </div>
+                    <button class="btn btn-cyan" style="width:100%;padding:15px;font-size:14px" onclick="register()">▸ KAYIT OL</button>
+                    <p style="margin-top:18px;font-size:12px;color:var(--text2)">
+                        <a href="#" style="color:var(--cyan);text-decoration:none;font-weight:600" onclick="showLoginForm()">Giriş yap</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- API SECTION -->
+        <div class="section" id="apiSection">
+            <h2 class="section-title">📡 API'ler</h2>
+            <p class="section-subtitle">Tüm API'leri keşfedin, kopyalayın ve kullanın</p>
+            <input type="text" class="api-search" placeholder="🔍 API ara... (örn: kargo, deprem, namaz)" oninput="filterAPIs(this.value)">
+            <div class="api-grid" id="apiGrid"></div>
+        </div>
+
+        <!-- PROFILE SECTION -->
+        <div class="section" id="profileSection">
+            <h2 class="section-title">👤 Profilim</h2>
+            <div class="profile-card">
+                <div class="profile-avatar" id="profileAvatar">?</div>
+                <div class="profile-name" id="profileName"></div>
+                <div class="profile-role" id="profileRole"></div>
+                <div class="profile-tg" id="profileTg"></div>
+                <div class="progress-bar" style="max-width:300px;margin:0 auto"><div class="progress-fill" id="profileProgress" style="width:0%"></div></div>
+                <p style="color:var(--text2);font-size:11px;margin-top:8px" id="profileLimit"></p>
+                <div class="profile-stats">
+                    <div class="profile-stat"><div class="profile-stat-value" id="statTotal">0</div><div class="profile-stat-label">Kullanılan</div></div>
+                    <div class="profile-stat"><div class="profile-stat-value" id="statLimit">5</div><div class="profile-stat-label">Limit</div></div>
+                    <div class="profile-stat"><div class="profile-stat-value" id="statFav">0</div><div class="profile-stat-label">Favori</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAVORITES SECTION -->
+        <div class="section" id="favoritesSection">
+            <h2 class="section-title">⭐ Favori API'lerim</h2>
+            <p class="section-subtitle">Hızlı erişim için işaretlediğin API'ler</p>
+            <div class="favorites-grid" id="favoritesGrid"><p style="color:var(--text2);text-align:center;padding:40px">Henüz favori API eklemedin. API kartındaki ⭐ butonuna tıkla!</p></div>
+        </div>
+
+        <!-- MESSAGES SECTION -->
+        <div class="section" id="messagesSection">
+            <h2 class="section-title">💬 Mesajlar</h2>
+            <p class="section-subtitle">Admin duyuruları ve özel mesajlar</p>
+            <div id="messagesList"><p style="color:var(--text2);text-align:center;padding:40px">Mesaj yok</p></div>
+        </div>
+
+        <!-- ADMIN SECTION -->
+        <div class="section" id="adminSection">
+            <h2 class="section-title">⚙️ Admin Panel</h2>
+            <p class="section-subtitle">Kullanıcı yönetimi, API bakım, duyurular</p>
+            <div class="admin-grid" id="adminContent"></div>
+        </div>
+
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ============ CONFIGURATION ============
+        const API_URL = 'https://skay-bot.onrender.com';
+        const LS_USERS = 'skay_users_v4';
+        const LS_CURRENT = 'skay_current_v4';
+        const LS_FAVORITES = 'skay_favorites';
+        const LS_MESSAGES = 'skay_messages';
+        const LS_NOTIFICATIONS = 'skay_notifications';
+        const LS_LOGS = 'skay_logs';
+
+        // ============ DEFAULT DATA ============
+        if (!localStorage.getItem(LS_USERS)) {
+            localStorage.setItem(LS_USERS, JSON.stringify({
+                'TuncaySkay': {
+                    password: 'admin123', telegram: '@TuncaySkay',
+                    role: 'owner', limit: 99999, used: 0, banned: false
+                }
+            }));
+        }
+        if (!localStorage.getItem(LS_FAVORITES)) localStorage.setItem(LS_FAVORITES, JSON.stringify({}));
+        if (!localStorage.getItem(LS_MESSAGES)) localStorage.setItem(LS_MESSAGES, JSON.stringify({}));
+        if (!localStorage.getItem(LS_NOTIFICATIONS)) localStorage.setItem(LS_NOTIFICATIONS, JSON.stringify([]));
+        if (!localStorage.getItem(LS_LOGS)) localStorage.setItem(LS_LOGS, JSON.stringify([]));
+
+        // ============ API LIST ============
+        const API_LIST = [
+            { id: 'kargo', name: '📦 Kargo Takip', desc: 'Barkod numarası ile tüm kargo firmalarında sorgulama yapar. PTT, Yurtiçi, Aras, MNG, UPS, FedEx desteği.', url: 'kargotakip.php?barkod=5196277493609', maintenance: false },
+            { id: 'deprem', name: '🌍 Deprem Sorgulama', desc: 'Kandilli Rasathanesi verileri ile son depremleri listeler. Şehir bazlı filtreleme yapabilirsiniz.', url: 'depremapi.php?sehir=ankara', maintenance: false },
+            { id: 'namaz-il', name: '🕌 Namaz Vakti (İl)', desc: 'İl bazlı günlük namaz vakitleri. İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı.', url: 'namaz-il.php?sehir=istanbul', maintenance: false },
+            { id: 'namaz-ilce', name: '🕌 Namaz Vakti (İl+İlçe)', desc: 'İl ve ilçe bazlı namaz vakitleri. Daha hassas konum için ilçe girin.', url: 'namaz-ilce.php?sehir=istanbul/kadikoy', maintenance: false },
+            { id: 'ai', name: '🤖 AI Sohbet', desc: 'Yapay zeka ile sohbet edin. Sorular sorun, kod yazdırın, fikir alın.', url: 'ai.php?mesaj=merhaba', maintenance: false },
+            { id: 'burc', name: '⭐ Burç Yorumu', desc: 'Günlük burç yorumları. 12 burç için AI destekli yorumlar.', url: 'burc.php?burc=koc', maintenance: false },
+            { id: 'scanner', name: '🌐 Site Scanner', desc: 'Domain/IP analizi, port tarama, whois sorgulama, teknoloji tespiti, güvenlik kontrolleri.', url: 'scanner.php?domain=github.com', maintenance: false },
+            { id: 'telno', name: '📱 Telefon Sorgulama', desc: 'Telefon numarasından operatör, şehir, ülke bilgisi. WhatsApp ve Telegram kontrolü.', url: 'telno.php?phone=905422533105', maintenance: false },
+            { id: 'hash', name: '🔑 Hash Kırma', desc: 'MD5, SHA1, SHA256 hash çözme. Veritabanı destekli online sorgulama.', url: 'hash.php?hash=e10adc3949ba59abbe56e057f20f883e', maintenance: false },
+            { id: 'fakeid', name: '🎭 Fake ID Üretici', desc: 'Gerçekçi sahte kimlik bilgileri üretir. TC, adres, telefon, email.', url: 'fakeid.php?cinsiyet=erkek', maintenance: false },
+            { id: 'tempmail', name: '📧 Geçici Email', desc: 'Anlık geçici email oluştur. Gelen kutusunu kontrol et, mesajları oku.', url: 'tempmail.php?action=create', maintenance: false },
+            { id: 'smsbom', name: '💣 SMS Bomber', desc: 'Toplu SMS gönderimi. Çoklu servis desteği ile yüksek başarı oranı.', url: 'smsbom.php?no=5528785353', maintenance: false },
+        ];
+
+        // ============ STATE ============
+        let currentUser = null;
+        let pendingLogin = null;
+        let pendingReg = null;
+
+        // ============ HELPERS ============
+        function getUsers() { return JSON.parse(localStorage.getItem(LS_USERS)); }
+        function saveUsers(u) { localStorage.setItem(LS_USERS, JSON.stringify(u)); }
+        function getFavorites() { return JSON.parse(localStorage.getItem(LS_FAVORITES)); }
+        function saveFavorites(f) { localStorage.setItem(LS_FAVORITES, JSON.stringify(f)); }
+        function getMessages() { return JSON.parse(localStorage.getItem(LS_MESSAGES)); }
+        function saveMessages(m) { localStorage.setItem(LS_MESSAGES, JSON.stringify(m)); }
+        function getNotifications() { return JSON.parse(localStorage.getItem(LS_NOTIFICATIONS)); }
+        function saveNotifications(n) { localStorage.setItem(LS_NOTIFICATIONS, JSON.stringify(n)); }
+        function getLogs() { return JSON.parse(localStorage.getItem(LS_LOGS)); }
+        function saveLogs(l) { localStorage.setItem(LS_LOGS, JSON.stringify(l)); }
+
+        function toast(msg, type) {
+            const t = document.createElement('div');
+            t.className = 'toast' + (type === 'error' ? ' error' : '');
+            t.textContent = msg;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => t.remove(), 3500);
+        }
+
+        function addNotification(msg) {
+            const n = getNotifications();
+            n.unshift({ msg, time: new Date().toLocaleString(), read: false });
+            if (n.length > 50) n.pop();
+            saveNotifications(n);
+            updateNotifBadge();
+        }
+
+        function addLog(action) {
+            const logs = getLogs();
+            logs.unshift({ user: currentUser?.username || '?', action, time: new Date().toISOString() });
+            if (logs.length > 200) logs.pop();
+            saveLogs(logs);
+        }
+
+        function updateNotifBadge() {
+            const n = getNotifications().filter(x => !x.read);
+            const badge = document.getElementById('notifBadge');
+            if (n.length > 0) { badge.style.display = 'flex'; badge.textContent = n.length; }
+            else { badge.style.display = 'none'; }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText('https://skay-api.onrender.com/' + text);
+            toast('✅ Link kopyalandı!', 'success');
+        }
+
+        // ============ UI ============
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function navigateTo(section) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(section + 'Section');
+            if (target) target.classList.add('active');
+            document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+            const link = document.querySelector(`[data-section="${section}"]`);
+            if (link) link.classList.add('active');
+            if (section === 'apis') renderAPIs();
+            if (section === 'profile') renderProfile();
+            if (section === 'favorites') renderFavorites();
+            if (section === 'messages') renderMessages();
+            if (section === 'admin') renderAdmin();
+            if (window.innerWidth < 768) toggleSidebar();
+        }
+
+        function toggleNotifications() {
+            const dd = document.getElementById('notifDropdown');
+            dd.classList.toggle('show');
+            if (dd.classList.contains('show')) renderNotifications();
+        }
+
+        function clearNotifications() {
+            saveNotifications([]);
+            updateNotifBadge();
+            renderNotifications();
+            toast('✅ Bildirimler temizlendi');
+        }
+
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginCodeBox').style.display = 'none';
+        }
+
+        function showRegisterForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('regCodeBox').style.display = 'none';
+        }
+
+        // ============ AUTH ============
+        function logout() {
+            currentUser = null;
+            document.getElementById('topbarRight').style.display = 'none';
+            document.getElementById('adminMenuLink').style.display = 'none';
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.getElementById('loginSection').classList.add('active');
+            showLoginForm();
+        }
+
+        async function sendCode(tg, u) {
+            try {
+                const r = await fetch(`${API_URL}/send_code`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram: tg, username: u })
+                });
+                const d = await r.json();
+                if (d.success) toast('✅ Kod gönderildi! Telegram\'ı kontrol et', 'success');
+                else toast('❌ ' + d.message, 'error');
+                return d;
+            } catch (e) { toast('❌ Sunucu hatası', 'error'); return { success: false }; }
+        }
+
+        async function verifyCode(u, c) {
+            try {
+                const r = await fetch(`${API_URL}/verify_code`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, code: c })
+                });
+                return await r.json();
+            } catch (e) { return { success: false }; }
+        }
+
+        async function register() {
+            const u = document.getElementById('regUser').value.trim();
+            const p = document.getElementById('regPass').value.trim();
+            const p2 = document.getElementById('regPass2').value.trim();
+            const tg = document.getElementById('regTg').value.trim();
+
+            if (!u || !p || !p2 || !tg) { toast('❌ Tüm alanları doldur', 'error'); return; }
+            if (p !== p2) { toast('❌ Şifreler eşleşmiyor', 'error'); return; }
+            if (!tg.startsWith('@')) { toast('❌ @ ile başlamalı', 'error'); return; }
+            if (getUsers()[u]) { toast('❌ Bu kullanıcı adı kayıtlı', 'error'); return; }
+
+            const cb = document.getElementById('regCodeBox');
+            if (cb.style.display === 'none') {
+                cb.style.display = 'block';
+                pendingReg = { u, p, tg };
+                const r = await sendCode(tg, u);
+                if (!r.success) { cb.style.display = 'none'; return; }
+                return;
+            }
+
+            const code = document.getElementById('regCode').value.trim();
+            const v = await verifyCode(pendingReg.u, code);
+            if (v.success) {
+                const users = getUsers();
+                users[pendingReg.u] = { password: pendingReg.p, telegram: pendingReg.tg, role: 'free', limit: 5, used: 0, banned: false };
+                saveUsers(users);
+                toast('✅ Kayıt başarılı! Giriş yapabilirsin', 'success');
+                showLoginForm();
+                cb.style.display = 'none';
+                addLog('Yeni kayıt: ' + pendingReg.u);
+            } else { toast('❌ Yanlış kod', 'error'); }
+        }
+
+        async function login() {
+            const u = document.getElementById('loginUser').value.trim();
+            const p = document.getElementById('loginPass').value.trim();
+            if (!u || !p) { toast('❌ Alanları doldur', 'error'); return; }
+
+            const users = getUsers(), user = users[u];
+            if (!user) { toast('❌ Kullanıcı bulunamadı', 'error'); return; }
+            if (user.banned) { toast('❌ Hesabın banlandı!', 'error'); return; }
+            if (user.password !== p) { toast('❌ Şifre yanlış', 'error'); return; }
+
+            const cb = document.getElementById('loginCodeBox');
+            if (cb.style.display === 'none') {
+                cb.style.display = 'block';
+                pendingLogin = { u };
+                const r = await sendCode(user.telegram, u);
+                if (!r.success) { cb.style.display = 'none'; return; }
+                return;
+            }
+
+            const code = document.getElementById('loginCode').value.trim();
+            const v = await verifyCode(pendingLogin.u, code);
+            if (v.success) {
+                currentUser = { username: pendingLogin.u, ...users[pendingLogin.u] };
+                showDashboard();
+                toast('✅ Hoş geldin ' + pendingLogin.u + '!', 'success');
+                cb.style.display = 'none';
+                addLog('Giriş yaptı: ' + pendingLogin.u);
+            } else { toast('❌ Yanlış kod', 'error'); }
+        }
+
+        function showDashboard() {
+            document.getElementById('loginSection').classList.remove('active');
+            document.getElementById('apiSection').classList.add('active');
+            document.getElementById('topbarRight').style.display = 'flex';
+
+            document.getElementById('topAvatar').textContent = currentUser.username[0].toUpperCase();
+            document.getElementById('topName').textContent = currentUser.username;
+            document.getElementById('topLimit').textContent = currentUser.used + '/' + currentUser.limit;
+
+            document.getElementById('sideAvatar').textContent = currentUser.username[0].toUpperCase();
+            document.getElementById('sideName').textContent = currentUser.username;
+            const sr = document.getElementById('sideRole');
+            sr.textContent = currentUser.role.toUpperCase();
+            sr.className = 'sidebar-role ' + currentUser.role;
+
+            if (currentUser.role === 'owner' || currentUser.role === 'admin') {
+                document.getElementById('adminMenuLink').style.display = 'flex';
+            }
+
+            updateNotifBadge();
+            updateFavCount();
+            renderAPIs();
+        }
+
+        function updateFavCount() {
+            const favs = getFavorites()[currentUser.username] || [];
+            document.getElementById('favCount').textContent = favs.length;
+        }
+
+        // ============ API RENDERING ============
+        function renderAPIs(filter) {
+            const grid = document.getElementById('apiGrid');
+            const favs = getFavorites()[currentUser.username] || [];
+            const q = (filter || '').toLowerCase();
+
+            grid.innerHTML = API_LIST.filter(a => a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q)).map(api => {
+                const locked = (currentUser.used >= currentUser.limit && currentUser.role !== 'owner') || api.maintenance;
+                const isFav = favs.includes(api.id);
+                return `
+                <div class="api-card${locked ? ' locked' : ''}">
+                    ${api.maintenance ? '<div class="maintenance-badge">BAKIMDA</div>' : ''}
+                    <div class="api-header">
+                        <div class="api-icon">${api.name.split(' ')[0]}</div>
+                        <div class="api-name">${api.name}</div>
+                    </div>
+                    <div class="api-desc">${api.desc}</div>
+                    <div class="api-url-box" onclick="copyToClipboard('${api.url}')" title="Kopyalamak için tıkla">skay-api.onrender.com/${api.url}</div>
+                    <div class="api-actions">
+                        <button class="btn-copy" onclick="useAPI('${api.id}');copyToClipboard('${api.url}')">📋 Kopyala & Kullan</button>
+                        <button class="btn-fav${isFav ? ' active' : ''}" onclick="toggleFavorite('${api.id}')" title="Favorilere ekle/çıkar">⭐</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function filterAPIs(q) { renderAPIs(q); }
+
+        function useAPI(id) {
+            if (currentUser.used >= currentUser.limit && currentUser.role !== 'owner') {
+                toast('❌ Günlük limitin doldu! VIP olmak için adminle iletişime geç.', 'error');
+                return;
+            }
+            const users = getUsers();
+            users[currentUser.username].used++;
+            currentUser.used = users[currentUser.username].used;
+            saveUsers(users);
+            document.getElementById('topLimit').textContent = currentUser.used + '/' + currentUser.limit;
+            document.getElementById('sideProgressText').textContent = currentUser.used + ' / ' + currentUser.limit + ' API';
+            document.getElementById('sideProgress').style.width = (currentUser.used / currentUser.limit * 100) + '%';
+            toast('✅ API kullanıldı! Kalan: ' + (currentUser.limit - currentUser.used), 'success');
+            addLog('API kullandı: ' + id);
+        }
+
+        function toggleFavorite(id) {
+            const favs = getFavorites();
+            if (!favs[currentUser.username]) favs[currentUser.username] = [];
+            const idx = favs[currentUser.username].indexOf(id);
+            if (idx > -1) { favs[currentUser.username].splice(idx, 1); toast('⭐ Favorilerden çıkarıldı'); }
+            else { favs[currentUser.username].push(id); toast('⭐ Favorilere eklendi!'); }
+            saveFavorites(favs);
+            updateFavCount();
+            renderAPIs();
+        }
+
+        // ============ PROFILE ============
+        function renderProfile() {
+            document.getElementById('profileAvatar').textContent = currentUser.username[0].toUpperCase();
+            document.getElementById('profileName').textContent = currentUser.username;
+            const pr = document.getElementById('profileRole');
+            pr.textContent = currentUser.role.toUpperCase();
+            pr.className = 'profile-role ' + currentUser.role;
+            document.getElementById('profileTg').textContent = '📱 ' + (currentUser.telegram || 'Yok');
+            document.getElementById('profileLimit').textContent = 'API Kullanım: ' + currentUser.used + ' / ' + currentUser.limit;
+            document.getElementById('profileProgress').style.width = (currentUser.used / currentUser.limit * 100) + '%';
+            document.getElementById('statTotal').textContent = currentUser.used;
+            document.getElementById('statLimit').textContent = currentUser.limit;
+            document.getElementById('statFav').textContent = (getFavorites()[currentUser.username] || []).length;
+        }
+
+        // ============ FAVORITES ============
+        function renderFavorites() {
+            const favs = getFavorites()[currentUser.username] || [];
+            const grid = document.getElementById('favoritesGrid');
+            if (favs.length === 0) {
+                grid.innerHTML = '<p style="color:var(--text2);text-align:center;padding:40px">Henüz favori API eklemedin. API kartındaki ⭐ butonuna tıkla!</p>';
+                return;
+            }
+            grid.innerHTML = favs.map(id => {
+                const api = API_LIST.find(a => a.id === id);
+                if (!api) return '';
+                return `<div class="favorite-item" onclick="copyToClipboard('${api.url}')">
+                    <div style="font-size:28px">${api.name.split(' ')[0]}</div>
+                    <div style="color:#fff;font-size:11px;margin-top:6px">${api.name}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ============ MESSAGES ============
+        function renderMessages() {
+            const msgs = getMessages()[currentUser.username] || [];
+            const list = document.getElementById('messagesList');
+            if (msgs.length === 0) {
+                list.innerHTML = '<p style="color:var(--text2);text-align:center;padding:40px">Henüz mesaj yok</p>';
+                return;
+            }
+            list.innerHTML = msgs.map((m, i) => `<div class="admin-card" style="margin-bottom:8px">
+                <div style="color:#fff;font-size:12px">${m.msg}</div>
+                <div style="color:var(--text2);font-size:10px;margin-top:4px">${m.time} - Gönderen: ${m.from}</div>
+            </div>`).join('');
+        }
+
+        // ============ NOTIFICATIONS ============
+        function renderNotifications() {
+            const notifs = getNotifications();
+            const list = document.getElementById('notifList');
+            if (notifs.length === 0) {
+                list.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text2)">Bildirim yok</p>';
+                return;
+            }
+            list.innerHTML = notifs.map(n => `<div class="notif-item${n.read ? '' : ' unread'}">
+                <div>${n.msg}</div><div class="notif-time">${n.time}</div>
+            </div>`).join('');
+            // Mark as read
+            const updated = getNotifications();
+            updated.forEach(n => n.read = true);
+            saveNotifications(updated);
+            updateNotifBadge();
+        }
+
+        // ============ ADMIN ============
+        function renderAdmin() {
+            const users = getUsers();
+            const logs = getLogs();
+            let html = '';
+
+            // İstatistikler
+            html += `<div class="admin-card">
+                <h3>📊 İstatistikler</h3>
+                <p style="color:#fff">Toplam Kullanıcı: <b>${Object.keys(users).length}</b></p>
+                <p style="color:#fff">VIP: <b>${Object.values(users).filter(u => u.role === 'vip').length}</b></p>
+                <p style="color:#fff">FREE: <b>${Object.values(users).filter(u => u.role === 'free').length}</b></p>
+                <p style="color:#fff">Admin: <b>${Object.values(users).filter(u => u.role === 'admin').length}</b></p>
+                <p style="color:#fff">Banlı: <b>${Object.values(users).filter(u => u.banned).length}</b></p>
+                <p style="color:#fff">Bugün İşlem: <b>${logs.filter(l => l.time > new Date(Date.now()-86400000).toISOString()).length}</b></p>
+            </div>`;
+
+            // Duyuru
+            html += `<div class="admin-card">
+                <h3>📢 Duyuru Gönder</h3>
+                <label>Mesaj</label>
+                <textarea id="announceMsg" placeholder="Tüm kullanıcılara gönderilecek duyuru..."></textarea>
+                <button class="btn btn-cyan" style="width:100%" onclick="sendAnnouncement()">📢 Tüm Kullanıcılara Gönder</button>
+            </div>`;
+
+            // Özel mesaj
+            html += `<div class="admin-card">
+                <h3>💬 Özel Mesaj Gönder</h3>
+                <label>Kullanıcı</label>
+                <input type="text" id="pmUser" placeholder="Kullanıcı adı">
+                <label>Mesaj</label>
+                <textarea id="pmMsg" placeholder="Özel mesaj..."></textarea>
+                <button class="btn btn-purple" style="width:100%" onclick="sendPrivateMessage()">💬 Gönder</button>
+            </div>`;
+
+            // VIP Ver/Al
+            html += `<div class="admin-card">
+                <h3>👤 VIP Yönetimi</h3>
+                <label>Kullanıcı adı</label>
+                <input type="text" id="vipUser" placeholder="Kullanıcı adı">
+                <div class="btn-row">
+                    <button class="btn btn-gold" onclick="giveVIP()">⭐ VIP Ver</button>
+                    <button class="btn btn-red" onclick="takeVIP()">⬇ VIP Al</button>
+                </div>
+            </div>`;
+
+            // Ban/Unban
+            html += `<div class="admin-card">
+                <h3>🔨 Ban Yönetimi</h3>
+                <label>Kullanıcı adı</label>
+                <input type="text" id="banUserInput" placeholder="Kullanıcı adı">
+                <div class="btn-row">
+                    <button class="btn btn-red" onclick="banUser()">🚫 Banla</button>
+                    <button class="btn btn-green" onclick="unbanUser()">✅ Ban Aç</button>
+                </div>
+            </div>`;
+
+            // Admin ekle
+            html += `<div class="admin-card">
+                <h3>👑 Admin Ekle</h3>
+                <label>Kullanıcı adı</label>
+                <input type="text" id="adminUserInput" placeholder="Kullanıcı adı">
+                <button class="btn btn-purple" style="width:100%" onclick="addAdmin()">👑 Admin Yap</button>
+            </div>`;
+
+            // API Bakım
+            html += `<div class="admin-card">
+                <h3>🔧 API Bakım Modu</h3>
+                <label>API Seç</label>
+                <select id="maintenanceApi">${API_LIST.map(a => `<option value="${a.id}">${a.name} ${a.maintenance ? '(BAKIMDA)' : ''}</option>`).join('')}</select>
+                <button class="btn btn-red" style="width:100%" onclick="toggleMaintenance()">🔧 Bakıma Al / Çıkar</button>
+            </div>`;
+
+            // Son işlemler
+            html += `<div class="admin-card" style="grid-column:1/-1">
+                <h3>📝 Son İşlemler (Son 50)</h3>
+                <div style="max-height:200px;overflow-y:auto">${logs.slice(0, 50).map(l => `<div style="font-size:10px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border)">${l.time} | <b style="color:#fff">${l.user}</b> | ${l.action}</div>`).join('')}</div>
+            </div>`;
+
+            // Kullanıcı tablosu
+            html += `<div class="admin-card" style="grid-column:1/-1">
+                <h3>👥 Kullanıcı Listesi</h3>
+                <table class="user-table">
+                    <tr><th>Kullanıcı</th><th>Rol</th><th>Telegram</th><th>Kullanım</th><th>Limit</th><th>Durum</th></tr>
+                    ${Object.entries(users).map(([u, d]) => `
+                        <tr>
+                            <td><b>${u}</b></td>
+                            <td><span class="badge badge-${d.role}">${d.role.toUpperCase()}</span></td>
+                            <td>${d.telegram||'-'}</td>
+                            <td>${d.used}</td>
+                            <td>${d.limit}</td>
+                            <td>${d.banned?'<span class="badge badge-banned">BANLI</span>':'✅'}</td>
+                        </tr>`).join('')}
+                </table>
+            </div>`;
+
+            document.getElementById('adminContent').innerHTML = html;
+        }
+
+        // Admin actions
+        function sendAnnouncement() {
+            const msg = document.getElementById('announceMsg').value.trim();
+            if (!msg) { toast('❌ Mesaj yaz', 'error'); return; }
+            const msgs = getMessages();
+            const users = getUsers();
+            for (let u of Object.keys(users)) {
+                if (!msgs[u]) msgs[u] = [];
+                msgs[u].push({ msg, from: currentUser.username, time: new Date().toLocaleString() });
+            }
+            saveMessages(msgs);
+            addNotification('📢 Yeni duyuru: ' + msg.substring(0, 50));
+            toast('✅ Duyuru tüm kullanıcılara gönderildi!', 'success');
+            addLog('Duyuru gönderdi');
+        }
+
+        function sendPrivateMessage() {
+            const u = document.getElementById('pmUser').value.trim();
+            const msg = document.getElementById('pmMsg').value.trim();
+            if (!u || !msg) { toast('❌ Tüm alanları doldur', 'error'); return; }
+            if (!getUsers()[u]) { toast('❌ Kullanıcı bulunamadı', 'error'); return; }
+            const msgs = getMessages();
+            if (!msgs[u]) msgs[u] = [];
+            msgs[u].push({ msg, from: currentUser.username, time: new Date().toLocaleString() });
+            saveMessages(msgs);
+            toast('✅ Mesaj gönderildi!', 'success');
+            addLog('Özel mesaj gönderdi: ' + u);
+        }
+
+        function giveVIP() {
+            const u = document.getElementById('vipUser').value.trim();
+            if (!u || !getUsers()[u]) { toast('❌ Kullanıcı bulunamadı', 'error'); return; }
+            const users = getUsers();
+            users[u].role = 'vip'; users[u].limit = 100;
+            saveUsers(users);
+            toast('✅ ' + u + ' VIP yapıldı!', 'success');
+            addLog('VIP verdi: ' + u);
+            renderAdmin();
+        }
+
+        function takeVIP() {
+            const u = document.getElementById('vipUser').value.trim();
+            if (!u || !getUsers()[u]) { toast('❌ Kullanıcı bulunamadı', 'error'); return; }
+            if (u === 'TuncaySkay') { toast('❌ Kurucudan VIP alınamaz!', 'error'); return; }
+            const users = getUsers();
+            users[u].role = 'free'; users[u].limit = 5;
+            saveUsers(users);
+            toast('✅ ' + u + ' VIP alındı!', 'success');
+            addLog('VIP aldı: ' + u);
+            renderAdmin();
+        }
+
+        function banUser() {
+            const u = document.getElementById('banUserInput').value.trim();
+            if (!u || !getUsers()[u]) { toast('❌ Kullanıcı bulunamadı', 'error'); return; }
+            if (u === 'TuncaySkay') { toast('❌ Kurucu banlanamaz!', 'error'); return; }
+            const users = getUsers();
+            users[u].banned = true;
+            saveUsers(users);
+            toast('✅ ' + u + ' banlandı!', 'success');
+            addLog('Banladı: ' + u);
+            renderAdmin();
+        }
+
+        function unbanUser() {
+            const u = document.getElementById('banUserInput').value.trim();
+            if (!u || !getUsers()[u]) { toast('❌ Kullanıcı bulunamadı', 'error'); return; }
+            const users = getUsers();
+            users[u].banned = false;
+            saveUsers(users);
+            toast('✅ ' + u + ' banı açıldı!', 'success');
+            addLog('Ban açtı: ' + u);
+            renderAdmin();
+        }
+
+        function addAdmin() {
+            const u = document.getElementById('adminUserInput').value.trim();
+            if (!u || !getUsers()[u]) { toast('❌ Kullanıcı bulunamadı', 'error'); return; }
+            const users = getUsers();
+            users[u].role = 'admin'; users[u].limit = 100;
+            saveUsers(users);
+            toast('✅ ' + u + ' admin yapıldı!', 'success');
+            addLog('Admin ekledi: ' + u);
+            renderAdmin();
+        }
+
+        function toggleMaintenance() {
+            const id = document.getElementById('maintenanceApi').value;
+            const api = API_LIST.find(a => a.id === id);
+            if (api) {
+                api.maintenance = !api.maintenance;
+                toast(`✅ ${api.name} bakım ${api.maintenance ? 'a alındı' : 'dan çıkarıldı'}!`, 'success');
+                addLog(`API bakım ${api.maintenance ? 'a aldı' : 'dan çıkardı'}: ${id}`);
+                renderAPIs();
+                renderAdmin();
+            }
+        }
+
+        // ============ INIT ============
+        showLoginForm();
+        updateNotifBadge();
+    </script>
+</body>
+</html>
