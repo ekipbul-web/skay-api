@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKAY API - Hacker Terminal v3.0</title>
+    
+    <!-- Cloudflare Web Analytics -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "YOUR_CLOUDFLARE_TOKEN"}'></script>
+    
+    <style>
+        /* ============ CSS DEĞİŞKENLERİ ============ */
+        :root {
+            --bg: #0a0a0a;
+            --card: #0d1117;
+            --card2: #161b22;
+            --green: #00ff41;
+            --green-dark: #008f11;
+            --red: #ff1a1a;
+            --cyan: #00e5ff;
+            --yellow: #ffea00;
+            --gold: #ffc107;
+            --purple: #bf5af2;
+            --border: #1f2937;
+            --text: #c0c0c0;
+            --text2: #6b7280;
+            --sidebar-w: 280px;
+            --scanline: rgba(0, 255, 65, 0.03);
+        }
+
+        /* ============ FONT ============ */
+        @font-face {
+            font-family: 'Hack';
+            src: url('https://cdn.jsdelivr.net/npm/hack-font@3/build/web/fonts/hack-regular.woff2') format('woff2');
+        }
+
+        /* ============ RESET ============ */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ============ BODY ============ */
+        body {
+            background: var(--bg);
+            color: var(--green);
+            font-family: 'Courier New', 'Hack', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ============ SCANLINE EFFECT ============ */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                var(--scanline) 2px,
+                var(--scanline) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+            animation: scanline 10s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(100px);
+            }
+        }
+
+        /* ============ MATRIX CANVAS ============ */
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.06;
+            pointer-events: none;
+        }
+
+        /* ============ SCROLLBAR ============ */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--green);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--green);
+        }
+
+        /* ============ TOP BAR ============ */
+        .topbar {
+            background: var(--card);
+            border-bottom: 2px solid var(--green);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            animation: borderPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes borderPulse {
+            0%,
+            100% {
+                border-color: var(--green);
+                box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            }
+            50% {
+                border-color: var(--green-dark);
+                box-shadow: 0 0 40px rgba(0, 255, 65, 0.2);
+            }
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .hamburger {
+            background: none;
+            border: 1px solid var(--green);
+            color: var(--green);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-shadow: 0 0 8px var(--green);
+        }
+
+        .hamburger:hover {
+            background: var(--green);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+        }
+
+        .topbar-logo {
+            font-size: 22px;
+            color: var(--green);
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-shadow: 0 0 15px rgba(0, 255, 65, 0.6), 0 0 30px rgba(0, 255, 65, 0.3);
+            animation: textGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes textGlow {
+            0%,
+            100% {
+                text-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+            }
+            50% {
+                text-shadow: 0 0 30px rgba(0, 255, 65, 0.9), 0 0 60px rgba(0, 255, 65, 0.4);
+            }
+        }
+
+        .topbar-logo span {
+            color: var(--cyan);
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-notif {
+            position: relative;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text2);
+            transition: all 0.2s;
+        }
+
+        .topbar-notif:hover {
+            color: var(--green);
+            text-shadow: 0 0 10px var(--green);
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background: var(--red);
+            color: #fff;
+            font-size: 8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(255, 26, 26, 0.6);
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .topbar-user:hover {
+            border-color: var(--green);
+            background: rgba(0, 255, 65, 0.05);
+        }
+
+        .topbar-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            font-size: 13px;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+        }
+
+        /* ============ SIDEBAR OVERLAY ============ */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 60;
+            display: none;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        /* ============ SIDEBAR ============ */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: calc(-1 * var(--sidebar-w));
+            width: var(--sidebar-w);
+            height: 100%;
+            background: var(--card);
+            border-right: 2px solid var(--green);
+            z-index: 70;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.1);
+        }
+
+        .sidebar.show {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h3 {
+            color: var(--green);
+            font-size: 15px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+
+        .sidebar-close {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--green);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .sidebar-close:hover {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .sidebar-user {
+            padding: 18px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .sidebar-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--green);
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+        }
+
+        .sidebar-username {
+            color: #fff;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .sidebar-role {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 4px 0;
+        }
+
+        .sidebar-role.free {
+            color: var(--cyan);
+        }
+
+        .sidebar-role.admin {
+            color: var(--purple);
+        }
+
+        .sidebar-role.owner {
+            color: var(--red);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            color: var(--text2);
+            text-decoration: none;
+            border-radius: 6px;
+            margin-bottom: 3px;
+            font-size: 12px;
+            transition: all 0.2s;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: var(--card2);
+            color: var(--green);
+            border-color: var(--green);
+            text-shadow: 0 0 8px rgba(0, 255, 65, 0.4);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
+        }
+
+        .sidebar-nav a .nav-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-nav a .nav-badge {
+            position: absolute;
+            right: 10px;
+            background: var(--red);
+            color: #fff;
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 8px;
+        }
+
+        .sidebar-footer {
+            padding: 12px 18px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text2);
+            text-decoration: none;
+            font-size: 11px;
+            padding: 6px 0;
+            transition: all 0.2s;
+        }
+
+        .sidebar-footer a:hover {
+            color: var(--green);
+        }
+
+        /* ============ MAIN CONTENT ============ */
+        .main {
+            padding: 24px;
+            max-width: 1300px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 22px;
+            color: #fff;
+            margin-bottom: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .section-subtitle {
+            font-size: 12px;
+            color: var(--text2);
+            margin-bottom: 18px;
+        }
+
+        /* ============ API SEARCH ============ */
+        .api-search {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--green);
+            margin-bottom: 22px;
+            outline: none;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+
+        .api-search:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.15);
+        }
+
+        /* ============ API CARDS ============ */
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .api-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .api-card:hover {
+            border-color: var(--green);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 255, 65, 0.1);
+        }
+
+        .api-card .api-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .api-card .api-icon {
+            font-size: 30px;
+        }
+
+        .api-card .api-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .api-card .api-desc {
+            color: var(--text2);
+            font-size: 10px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .api-card .api-url-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 9px;
+            color: var(--green);
+            word-break: break-all;
+            margin-bottom: 10px;
+            cursor: pointer;
+            user-select: all;
+            transition: all 0.2s;
+        }
+
+        .api-card .api-url-box:hover {
+            border-color: var(--cyan);
+        }
+
+        .api-card .api-input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .api-card .api-input {
+            flex: 1;
+            padding: 10px 12px;
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--green);
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .api-card .api-input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+        }
+
+        .api-card .api-input::placeholder {
+            color: #333;
+        }
+
+        .api-card .btn-run {
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid var(--green);
+            color: var(--green);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            animation: btnPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes btnPulse {
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(0, 255, 65, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+            }
+        }
+
+        .api-card .btn-run:hover {
+            background: var(--green);
+            color: #000;
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
+        }
+
+        .api-card .btn-run:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            animation: none;
+        }
+
+        .api-card .api-result {
+            display: none;
+            background: #000;
+            border: 1px solid var(--green);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--green);
+            max-height: 250px;
+            overflow-y: auto;
+            line-height: 1.6;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .api-card .api-result.show {
+            display: block;
+        }
+
+        .api-card .api-result .cursor::after {
+            content: '_';
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .api-card .api-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .api-card .btn-copy,
+        .api-card .btn-fav {
+            background: transparent;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .api-card .btn-copy {
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            flex: 1;
+            text-align: center;
+        }
+
+        .api-card .btn-copy:hover {
+            background: var(--cyan);
+            color: #000;
+        }
+
+        .api-card .btn-fav {
+            border: 1px solid var(--yellow);
+            color: var(--yellow);
+        }
+
+        .api-card .btn-fav:hover {
+            background: var(--yellow);
+            color: #000;
+        }
+
+        .api-card .btn-fav.active {
+            background: var(--yellow);
+            color: #000;
+        }
+
+        .maintenance-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--red);
+            color: #fff;
+            font-size: 8px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* ============ AUTH FORMS ============ */
+        .auth-container {
+            max-width: 440px;
+            margin: 50px auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-card {
+            background: var(--card);
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 35px 30px;
+            box-shadow: 0 0 40px rgba(0, 255, 65, 0.08);
+            animation: borderPulse 3s ease-in-out infinite;
+        }
+
+        .auth-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+
+        .auth-title {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 6px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .auth-subtitle {
+            color: var(--text2);
+            font-size: 13px;
+            margin-bottom: 28px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #000;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--green);
+            margin-bottom: 14px;
+            outline: none;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+
+        .auth-input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.15);
+        }
+
+        .auth-input::placeholder {
+            color: #333;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--green);
+            background: transparent;
+            color: var(--green);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+
+        .auth-btn:hover {
+            background: var(--green);
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.4);
+        }
+
+        .auth-link {
+            color: var(--cyan);
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .auth-link:hover {
+            color: #fff;
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        .auth-divider {
+            color: var(--text2);
+            font-size: 12px;
+            margin: 16px 0;
+        }
+
+        /* ============ TOAST ============ */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .toast {
+            background: var(--card);
+            border: 1px solid var(--green);
+            padding: 12px 18px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 12px;
+            animation: slideIn 0.3s ease;
+            min-width: 250px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            font-family: 'Courier New', monospace;
+        }
+
+        .toast.error {
+            border-color: var(--red);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ============ NOTIFICATIONS ============ */
+        .notif-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 320px;
+            background: var(--card);
+            border: 1px solid var(--green);
+            border-radius: 8px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            z-index: 90;
+            display: none;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .notif-dropdown.show {
+            display: block;
+        }
+
+        .notif-dropdown-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--green);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .notif-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+
+        .notif-item:hover {
+            background: var(--card2);
+        }
+
+        .notif-item.unread {
+            border-left: 3px solid var(--green);
+        }
+
+        .notif-item .notif-time {
+            color: var(--text2);
+            font-size: 9px;
+            margin-top: 3px;
+        }
+
+        /* ============ ADMIN ============ */
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .admin-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .admin-card h3 {
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .admin-card label {
+            display: block;
+            color: var(--text2);
+            font-size: 9px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .admin-card input,
+        .admin-card select,
+        .admin-card textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--green);
+            margin-bottom: 8px;
+            outline: none;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .admin-card textarea {
+            height: 60px;
+            resize: vertical;
+        }
+
+        .admin-card .btn-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .admin-card .btn-row button {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 9px 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000;
+        }
+
+        .btn-red {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .btn-cyan {
+            background: var(--cyan);
+            color: #000;
+        }
+
+        .btn-gold {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .btn-purple {
+            background: var(--purple);
+            color: #fff;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 10px;
+        }
+
+        .user-table th {
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 9px;
+        }
+
+        .user-table td {
+            color: #fff;
+        }
+
+        .badge {
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-size: 8px;
+            font-weight: 600;
+        }
+
+        .badge-admin {
+            background: var(--purple);
+            color: #fff;
+        }
+
+        .badge-owner {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .badge-banned {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .msg-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 8px;
+        }
+
+        .msg-card .msg-from {
+            color: var(--cyan);
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .msg-card .msg-body {
+            color: #fff;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .msg-card .msg-time {
+            color: var(--text2);
+            font-size: 9px;
+            margin-top: 6px;
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .api-grid {
+                grid-template-columns: 1fr;
+            }
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+            .main {
+                padding: 14px;
+            }
+            .topbar {
+                padding: 10px 12px;
+            }
+            .topbar-logo {
+                font-size: 18px;
+            }
+            .notif-dropdown {
+                width: 280px;
+                right: -20px;
+            }
+            .auth-container {
+                margin: 30px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ MATRIX CANVAS ============ -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <!-- ============ TOP BAR ============ -->
+    <div class="topbar" id="topbarMain" style="display:none">
+        <div class="topbar-left">
+            <button class="hamburger" onclick="toggleSidebar()">☰</button>
+            <div class="topbar-logo">SKAY<span>API</span></div>
+        </div>
+        <div class="topbar-right" id="topbarRight">
+            <div class="topbar-notif" onclick="toggleNotifications()">
+                🔔
+                <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-dropdown-header">
+                        Bildirimler
+                        <span style="font-size:9px;color:var(--cyan);cursor:pointer" onclick="clearNotifications()">Temizle</span>
+                    </div>
+                    <div id="notifList">
+                        <p style="padding:15px;text-align:center;color:var(--text2);font-size:11px">Bildirim yok</p>
+                    </div>
+                </div>
+            </div>
+            <div class="topbar-user">
+                <div class="topbar-avatar" id="topAvatar">?</div>
+                <div>
+                    <div id="topName" style="font-size:11px">Kullanıcı</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SIDEBAR OVERLAY ============ -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- ============ SIDEBAR ============ -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>╔══ Menü ══╗</h3>
+            <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-avatar" id="sideAvatar">?</div>
+            <div class="sidebar-username" id="sideName">Kullanıcı</div>
+            <div class="sidebar-role free" id="sideRole">USER</div>
+        </div>
+        <div class="sidebar-nav">
+            <a href="#" class="active" data-section="apis" onclick="navigateTo('apis')">
+                <span class="nav-icon">📡</span> API'ler
+            </a>
+            <a href="#" data-section="profile" onclick="navigateTo('profile')">
+                <span class="nav-icon">👤</span> Profilim
+            </a>
+            <a href="#" data-section="favorites" onclick="navigateTo('favorites')">
+                <span class="nav-icon">⭐</span> Favorilerim
+                <span class="nav-badge" id="favCount">0</span>
+            </a>
+            <a href="#" data-section="messages" onclick="navigateTo('messages')">
+                <span class="nav-icon">💬</span> Mesajlar
+                <span class="nav-badge" id="msgBadge" style="display:none">0</span>
+            </a>
+            <a href="#" data-section="admin" id="adminMenuLink" style="display:none" onclick="navigateTo('admin')">
+                <span class="nav-icon">⚙️</span> Admin Panel
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="https://t.me/+FBDRT5Nsc4I4ZWRk" target="_blank" rel="noopener">📢 Telegram Kanal</a>
+            <a href="http://t.me/SkayApiVerificationBot" target="_blank" rel="noopener">🤖 Doğrulama Botu</a>
+            <a href="#" onclick="logout()">🚪 Çıkış Yap</a>
+        </div>
+    </div>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <div class="main">
+
+        <!-- ============ AUTH SECTION ============ -->
+        <div class="section active" id="authSection">
+            <div class="auth-container">
+
+                <!-- LOGIN FORM -->
+                <div id="loginForm" class="auth-card">
+                    <div class="auth-icon">🔐</div>
+                    <div class="auth-title">Giriş Yap</div>
+                    <div class="auth-subtitle">SKAY API Terminal'e hoş geldin</div>
+                    <input type="text" id="loginUser" class="auth-input" placeholder="Kullanıcı adı" autocomplete="username">
+                    <input type="password" id="loginPass" class="auth-input" placeholder="Şifre" autocomplete="current-password">
+                    <div id="loginCodeBox" style="display:none">
+                        <input type="text" id="loginCode" class="auth-input" placeholder="Telegram doğrulama kodu (6 hane)">
+                    </div>
+                    <button class="auth-btn" onclick="login()">▸ GİRİŞ YAP</button>
+                    <p class="auth-divider">
+                        <span class="auth-link" onclick="showForgotForm()">Şifremi Unuttum</span>
+                    </p>
+                    <p style="font-size:11px;color:var(--text2)">
+                        Hesabın yok mu? <span class="auth-link" onclick="showRegisterForm()">Kayıt ol</span>
+                    </p>
+                </div>
+
+                <!-- REGISTER FORM -->
+                <div id="registerForm" class="auth-card" style="display:none">
+                    <div class="auth-icon">📝</div>
+                    <div class="auth-title">Kayıt Ol</div>
+                    <div class="auth-subtitle">Hemen ücretsiz hesap oluştur</div>
+                    <input type="text" id="regUser" class="auth-input" placeholder="Kullanıcı adı" autocomplete="username">
+                    <input type="password" id="regPass" class="auth-input" placeholder="Şifre" autocomplete="new-password">
+                    <input type="password" id="regPass2" class="auth-input" placeholder="Şifre tekrar" autocomplete="new-password">
+                    <input type="text" id="regTg" class="auth-input" placeholder="@telegram kullanıcı adın">
+                    <div id="regCodeBox" style="display:none">
+                        <input type="text" id="regCode" class="auth-input" placeholder="Doğrulama kodu (6 hane)">
+                    </div>
+                    <button class="auth-btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="register()">▸ KAYIT OL</button>
+                    <p style="font-size:11px;color:var(--text2);margin-top:12px">
+                        Zaten hesabın var mı? <span class="auth-link" onclick="showLoginForm()">Giriş yap</span>
+                    </p>
+                </div>
+
+                <!-- FORGOT PASSWORD FORM -->
+                <div id="forgotForm" class="auth-card" style="display:none">
+                    <div class="auth-icon">🔑</div>
+                    <div class="auth-title">Şifremi Unuttum</div>
+                    <div class="auth-subtitle">Kullanıcı adını yaz, Telegram'dan kod al</div>
+                    <input type="text" id="forgotUser" class="auth-input" placeholder="Kullanıcı adın">
+                    <div id="forgotCodeBox" style="display:none">
+                        <input type="text" id="forgotCode" class="auth-input" placeholder="Telegram doğrulama kodu">
+                    </div>
+                    <div id="forgotNewPassBox" style="display:none">
+                        <input type="password" id="forgotNewPass" class="auth-input" placeholder="Yeni şifre">
+                        <input type="password" id="forgotNewPass2" class="auth-input" placeholder="Yeni şifre tekrar">
+                    </div>
+                    <button class="auth-btn" style="border-color:var(--purple);color:var(--purple)" id="forgotBtn" onclick="forgotPassword()">▸ KOD GÖNDER</button>
+                    <p style="font-size:11px;color:var(--text2);margin-top:12px">
+                        <span class="auth-link" onclick="showLoginForm()">Giriş yap</span>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============ API SECTION ============ -->
+        <div class="section" id="apiSection">
+            <h2 class="section-title">📡 API'ler</h2>
+            <p class="section-subtitle">Tüm API'leri keşfedin, kopyalayın ve direkt kullanın</p>
+            <input type="text" class="api-search" placeholder="🔍 API ara..." oninput="filterAPIs(this.value)">
+            <div class="api-grid" id="apiGrid"></div>
+        </div>
+
+        <!-- ============ PROFILE SECTION ============ -->
+        <div class="section" id="profileSection">
+            <h2 class="section-title">👤 Profilim</h2>
+            <div class="auth-card" style="max-width:450px;margin:0 auto;text-align:center">
+                <div class="sidebar-avatar" id="profileAvatar" style="width:70px;height:70px;font-size:30px;margin:0 auto 12px">?</div>
+                <div class="sidebar-username" id="profileName" style="font-size:18px"></div>
+                <div class="sidebar-role" id="profileRole"></div>
+                <p style="color:var(--text2);font-size:11px;margin:8px 0" id="profileTg"></p>
+            </div>
+        </div>
+
+        <!-- ============ FAVORITES SECTION ============ -->
+        <div class="section" id="favoritesSection">
+            <h2 class="section-title">⭐ Favori API'lerim</h2>
+            <div class="api-grid" id="favoritesGrid">
+                <p style="color:var(--text2);text-align:center;padding:40px;font-size:12px">Henüz favori yok. API kartındaki ⭐ butonuna tıkla!</p>
+            </div>
+        </div>
+
+        <!-- ============ MESSAGES SECTION ============ -->
+        <div class="section" id="messagesSection">
+            <h2 class="section-title">💬 Mesajlar</h2>
+            <div id="messagesList">
+                <p style="color:var(--text2);text-align:center;padding:40px;font-size:12px">Mesaj yok</p>
+            </div>
+        </div>
+
+        <!-- ============ ADMIN SECTION ============ -->
+        <div class="section" id="adminSection">
+            <h2 class="section-title">⚙️ Admin Panel</h2>
+            <p class="section-subtitle">Kullanıcı yönetimi, API bakım, duyurular</p>
+            <div class="admin-grid" id="adminContent"></div>
+        </div>
+
+    </div>
+
+    <!-- ============ TOAST CONTAINER ============ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ============ JAVASCRIPT ============ -->
+    <script>
+        // ============ MATRIX RAIN EFFECT ============
+        var canvas = document.getElementById('matrixCanvas');
+        var ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        var chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ01';
+        var fontSize = 14;
+        var columns = canvas.width / fontSize;
+        var drops = [];
+        for (var i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+            for (var i = 0; i < drops.length; i++) {
+                var text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // ============ CONFIGURATION ============
+        var API_URL = 'https://skay-bot.onrender.com';
+        var LS_USERS = 'skay_users_v12';
+        var LS_CURRENT = 'skay_current_v12';
+        var LS_FAV = 'skay_fav_v12';
+        var LS_MSG = 'skay_msg_v12';
+        var LS_NOTIF = 'skay_notif_v12';
+        var LS_LOGS = 'skay_logs_v12';
+        var COOKIE_NAME = 'skay_session_v12';
+
+        // ============ COOKIE FUNCTIONS ============
+        function setCookie(name, value, days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            var expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Strict;Secure";
+        }
+
+        function getCookie(name) {
+            var cookies = document.cookie.split('; ');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i];
+                if (cookie.startsWith(name + '=')) {
+                    return cookie.substring(name.length + 1);
+                }
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Strict;Secure";
+        }
+
+        // ============ DEFAULT DATA ============
+        if (!localStorage.getItem(LS_USERS)) {
+            var defaultUsers = {
+                'TuncaySkay': {
+                    password: '123456&Hack',
+                    telegram: '@TuncaySkay',
+                    role: 'owner',
+                    banned: false
+                }
+            };
+            localStorage.setItem(LS_USERS, JSON.stringify(defaultUsers));
+        }
+
+        if (!localStorage.getItem(LS_FAV)) {
+            localStorage.setItem(LS_FAV, JSON.stringify({}));
+        }
+
+        if (!localStorage.getItem(LS_MSG)) {
+            localStorage.setItem(LS_MSG, JSON.stringify({}));
+        }
+
+        if (!localStorage.getItem(LS_NOTIF)) {
+            localStorage.setItem(LS_NOTIF, JSON.stringify([]));
+        }
+
+        if (!localStorage.getItem(LS_LOGS)) {
+            localStorage.setItem(LS_LOGS, JSON.stringify([]));
+        }
+
+        // ============ API LIST ============
+        var API_LIST = [
+            {
+                id: 'kargo',
+                name: '📦 Kargo Takip',
+                desc: 'Barkod ile tüm kargo firmalarında sorgulama. PTT, Yurtiçi, Aras, MNG, UPS, FedEx desteği.',
+                url: 'kargotakip.php',
+                param: 'barkod',
+                placeholder: 'Barkod no: 5196277493609',
+                maintenance: false
+            },
+            {
+                id: 'deprem',
+                name: '🌍 Deprem',
+                desc: 'Kandilli Rasathanesi verileri ile son depremler. Şehir bazlı filtreleme yapabilirsiniz.',
+                url: 'depremapi.php',
+                param: 'sehir',
+                placeholder: 'Şehir: ankara',
+                maintenance: false
+            },
+            {
+                id: 'namaz-il',
+                name: '🕌 Namaz (İl)',
+                desc: 'İl bazlı günlük namaz vakitleri. İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı.',
+                url: 'namaz-il.php',
+                param: 'sehir',
+                placeholder: 'Şehir: istanbul',
+                maintenance: false
+            },
+            {
+                id: 'namaz-ilce',
+                name: '🕌 Namaz (İl+İlçe)',
+                desc: 'İl ve ilçe bazlı hassas namaz vakitleri. Daha doğru sonuç için ilçe girin.',
+                url: 'namaz-ilce.php',
+                param: 'sehir',
+                placeholder: 'il/ilçe: istanbul/kadikoy',
+                maintenance: false
+            },
+            {
+                id: 'ai',
+                name: '🤖 AI Sohbet',
+                desc: 'Yapay zeka ile sohbet edin. Sorular sorun, kod yazdırın, fikir alın.',
+                url: 'ai.php',
+                param: 'mesaj',
+                placeholder: 'Mesaj: merhaba',
+                maintenance: false
+            },
+            {
+                id: 'burc',
+                name: '⭐ Burç',
+                desc: '12 burç için AI destekli günlük burç yorumları.',
+                url: 'burc.php',
+                param: 'burc',
+                placeholder: 'Burç: koc',
+                maintenance: false
+            },
+            {
+                id: 'scanner',
+                name: '🌐 Site Scanner',
+                desc: 'Domain/IP analizi, port tarama, whois sorgulama, teknoloji tespiti, güvenlik kontrolleri.',
+                url: 'scanner.php',
+                param: 'domain',
+                placeholder: 'Domain: github.com',
+                maintenance: false
+            },
+            {
+                id: 'telno',
+                name: '📱 Telefon Sorgu',
+                desc: 'Telefon numarasından operatör, şehir, ülke bilgisi. WhatsApp ve Telegram kontrolü.',
+                url: 'telno.php',
+                param: 'phone',
+                placeholder: 'No: 905422533105',
+                maintenance: false
+            },
+            {
+                id: 'hash',
+                name: '🔑 Hash Kırma',
+                desc: 'MD5, SHA1, SHA256 hash çözme. Veritabanı destekli online sorgulama.',
+                url: 'hash.php',
+                param: 'hash',
+                placeholder: 'Hash: e10adc3949ba...',
+                maintenance: false
+            },
+            {
+                id: 'fakeid',
+                name: '🎭 Fake ID',
+                desc: 'Gerçekçi sahte kimlik bilgileri üretir. TC, adres, telefon, email.',
+                url: 'fakeid.php',
+                param: 'cinsiyet',
+                placeholder: 'erkek/kadin',
+                maintenance: false
+            },
+            {
+                id: 'tempmail',
+                name: '📧 Temp Mail',
+                desc: 'Anlık geçici email oluştur. Gelen kutusunu kontrol et, mesajları oku.',
+                url: 'tempmail.php',
+                param: 'action',
+                placeholder: 'create',
+                maintenance: false
+            },
+            {
+                id: 'smsbom',
+                name: '💣 SMS Bomber',
+                desc: 'Çoklu servis ile toplu SMS gönderimi. Yüksek başarı oranı.',
+                url: 'smsbom.php',
+                param: 'no',
+                placeholder: 'No: 5528785353',
+                maintenance: false
+            },
+            {
+                id: 'stripe',
+                name: '💳 Stripe CC (Charge)',
+                desc: 'Stripe Payment Intent ile gerçek charge denemesi. APPROVED / 3DS / CCN LIVE / DECLINED.',
+                url: 'stripe.php',
+                param: 'card',
+                placeholder: 'Kart: 5377190026782261|06|27|891',
+                maintenance: false
+            },
+            {
+                id: 'fastspring',
+                name: '💳 FastSpring CC',
+                desc: 'FastSpring ödeme sistemi üzerinden kart kontrolü. VanDyke SecureFX gateway.',
+                url: 'fastspring.php',
+                param: 'card',
+                placeholder: 'Kart: 5377190026782261|06|27|891',
+                maintenance: false
+            },
+        ];
+
+        // ============ STATE ============
+        var currentUser = null;
+        var pendingLogin = null;
+        var pendingReg = null;
+        var pendingForgot = null;
+
+        // ============ HELPER FUNCTIONS ============
+        function getUsers() {
+            return JSON.parse(localStorage.getItem(LS_USERS));
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem(LS_USERS, JSON.stringify(users));
+        }
+
+        function getFav() {
+            return JSON.parse(localStorage.getItem(LS_FAV));
+        }
+
+        function saveFav(fav) {
+            localStorage.setItem(LS_FAV, JSON.stringify(fav));
+        }
+
+        function getMsg() {
+            return JSON.parse(localStorage.getItem(LS_MSG));
+        }
+
+        function saveMsg(msg) {
+            localStorage.setItem(LS_MSG, JSON.stringify(msg));
+        }
+
+        function getNotif() {
+            return JSON.parse(localStorage.getItem(LS_NOTIF));
+        }
+
+        function saveNotif(notif) {
+            localStorage.setItem(LS_NOTIF, JSON.stringify(notif));
+        }
+
+        function getLogs() {
+            return JSON.parse(localStorage.getItem(LS_LOGS));
+        }
+
+        function saveLogs(logs) {
+            localStorage.setItem(LS_LOGS, JSON.stringify(logs));
+        }
+
+        function toast(message, type) {
+            var toastEl = document.createElement('div');
+            toastEl.className = 'toast' + (type === 'error' ? ' error' : '');
+            toastEl.textContent = message;
+            document.getElementById('toastContainer').appendChild(toastEl);
+            setTimeout(function() {
+                toastEl.remove();
+            }, 3500);
+        }
+
+        function addNotification(message) {
+            var notifications = getNotif();
+            notifications.unshift({
+                msg: message,
+                time: new Date().toLocaleString(),
+                read: false
+            });
+            if (notifications.length > 50) {
+                notifications.pop();
+            }
+            saveNotif(notifications);
+            updateNotifBadge();
+        }
+
+        function addLog(action) {
+            var logs = getLogs();
+            var username = currentUser ? currentUser.username : '?';
+            logs.unshift({
+                user: username,
+                action: action,
+                time: new Date().toISOString()
+            });
+            if (logs.length > 200) {
+                logs.pop();
+            }
+            saveLogs(logs);
+        }
+
+        function updateNotifBadge() {
+            var notifications = getNotif();
+            var unread = notifications.filter(function(n) {
+                return !n.read;
+            });
+            var badge = document.getElementById('notifBadge');
+            if (unread.length > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = unread.length;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function copyToClipboard(text) {
+            var fullUrl = 'https://skay-api.onrender.com/' + text;
+            navigator.clipboard.writeText(fullUrl).then(function() {
+                toast('✅ Link kopyalandı!');
+            }).catch(function() {
+                toast('❌ Kopyalanamadı', 'error');
+            });
+        }
+
+        function updateUnreadMsgBadge() {
+            if (!currentUser) return;
+            var msgs = getMsg()[currentUser.username] || [];
+            var badge = document.getElementById('msgBadge');
+            if (msgs.length > 0) {
+                badge.style.display = 'inline';
+                badge.textContent = msgs.length;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // ============ UI FUNCTIONS ============
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function navigateTo(section) {
+            // Tüm section'ları gizle
+            var sections = document.querySelectorAll('.section');
+            sections.forEach(function(el) {
+                el.classList.remove('active');
+            });
+
+            // Hedef section'ı göster
+            var sectionId = section === 'apis' ? 'apiSection' : section + 'Section';
+            var target = document.getElementById(sectionId);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            // Sidebar aktif link
+            var links = document.querySelectorAll('.sidebar-nav a');
+            links.forEach(function(a) {
+                a.classList.remove('active');
+            });
+            var activeLink = document.querySelector('[data-section="' + section + '"]');
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+
+            // İçerik render
+            if (section === 'apis') renderAPIs();
+            if (section === 'profile') renderProfile();
+            if (section === 'favorites') renderFavorites();
+            if (section === 'messages') renderMessages();
+            if (section === 'admin') renderAdmin();
+
+            // Mobilde sidebar'ı kapat
+            if (window.innerWidth < 768) {
+                toggleSidebar();
+            }
+        }
+
+        function toggleNotifications() {
+            var dropdown = document.getElementById('notifDropdown');
+            dropdown.classList.toggle('show');
+            if (dropdown.classList.contains('show')) {
+                renderNotifications();
+            }
+        }
+
+        function clearNotifications() {
+            saveNotif([]);
+            updateNotifBadge();
+            renderNotifications();
+        }
+
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotForm').style.display = 'none';
+            resetAuthForms();
+        }
+
+        function showRegisterForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('forgotForm').style.display = 'none';
+            resetAuthForms();
+        }
+
+        function showForgotForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotForm').style.display = 'block';
+            resetAuthForms();
+        }
+
+        function resetAuthForms() {
+            document.getElementById('loginCodeBox').style.display = 'none';
+            document.getElementById('regCodeBox').style.display = 'none';
+            document.getElementById('forgotCodeBox').style.display = 'none';
+            document.getElementById('forgotNewPassBox').style.display = 'none';
+            document.getElementById('forgotBtn').textContent = '▸ KOD GÖNDER';
+            pendingLogin = null;
+            pendingReg = null;
+            pendingForgot = null;
+        }
+
+        // ============ API CALLS ============
+        async function sendTelegramCode(telegram, username) {
+            try {
+                var response = await fetch(API_URL + '/send_code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        telegram: telegram,
+                        username: username
+                    })
+                });
+                var data = await response.json();
+                if (data.success) {
+                    toast('✅ Kod gönderildi! Telegram\'ı kontrol et');
+                } else {
+                    toast('❌ ' + data.message, 'error');
+                }
+                return data;
+            } catch (error) {
+                toast('❌ Sunucu hatası', 'error');
+                return {
+                    success: false
+                };
+            }
+        }
+
+        async function verifyCode(username, code) {
+            try {
+                var response = await fetch(API_URL + '/verify_code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        code: code
+                    })
+                });
+                return await response.json();
+            } catch (error) {
+                return {
+                    success: false,
+                    message: 'Bağlantı hatası'
+                };
+            }
+        }
+
+        // ============ REGISTER ============
+        async function register() {
+            var username = document.getElementById('regUser').value.trim();
+            var password = document.getElementById('regPass').value.trim();
+            var password2 = document.getElementById('regPass2').value.trim();
+            var telegram = document.getElementById('regTg').value.trim();
+
+            if (!username || !password || !password2 || !telegram) {
+                toast('❌ Tüm alanları doldur', 'error');
+                return;
+            }
+            if (password !== password2) {
+                toast('❌ Şifreler eşleşmiyor', 'error');
+                return;
+            }
+            if (!telegram.startsWith('@')) {
+                toast('❌ Telegram kullanıcı adı @ ile başlamalı', 'error');
+                return;
+            }
+
+            var users = getUsers();
+            if (users[username]) {
+                toast('❌ Bu kullanıcı adı zaten kayıtlı', 'error');
+                return;
+            }
+
+            var codeBox = document.getElementById('regCodeBox');
+            if (codeBox.style.display === 'none') {
+                codeBox.style.display = 'block';
+                pendingReg = {
+                    username: username,
+                    password: password,
+                    telegram: telegram
+                };
+                var result = await sendTelegramCode(telegram, username);
+                if (!result.success) {
+                    codeBox.style.display = 'none';
+                    return;
+                }
+                return;
+            }
+
+            var code = document.getElementById('regCode').value.trim();
+            var verify = await verifyCode(pendingReg.username, code);
+
+            if (verify.success) {
+                var users = getUsers();
+                users[pendingReg.username] = {
+                    password: pendingReg.password,
+                    telegram: pendingReg.telegram,
+                    role: 'free',
+                    banned: false
+                };
+                saveUsers(users);
+                toast('✅ Kayıt başarılı! Giriş yapabilirsin');
+                showLoginForm();
+                addLog('Yeni kayıt: ' + pendingReg.username);
+            } else {
+                toast('❌ ' + (verify.message || 'Yanlış doğrulama kodu'), 'error');
+            }
+        }
+
+        // ============ LOGIN ============
+        async function login() {
+            var username = document.getElementById('loginUser').value.trim();
+            var password = document.getElementById('loginPass').value.trim();
+
+            if (!username || !password) {
+                toast('❌ Tüm alanları doldur', 'error');
+                return;
+            }
+
+            var users = getUsers();
+            var user = users[username];
+
+            if (!user) {
+                toast('❌ Kullanıcı bulunamadı', 'error');
+                return;
+            }
+            if (user.banned) {
+                toast('❌ Hesabın banlandı', 'error');
+                return;
+            }
+            if (user.password !== password) {
+                toast('❌ Şifre yanlış. Unuttuysan alttaki linke tıkla.', 'error');
+                return;
+            }
+
+            var codeBox = document.getElementById('loginCodeBox');
+            if (codeBox.style.display === 'none') {
+                codeBox.style.display = 'block';
+                pendingLogin = {
+                    username: username
+                };
+                var result = await sendTelegramCode(user.telegram, username);
+                if (!result.success) {
+                    codeBox.style.display = 'none';
+                    return;
+                }
+                return;
+            }
+
+            var code = document.getElementById('loginCode').value.trim();
+            var verify = await verifyCode(pendingLogin.username, code);
+
+            if (verify.success) {
+                currentUser = {
+                    username: pendingLogin.username,
+                    password: user.password,
+                    telegram: user.telegram,
+                    role: user.role,
+                    banned: user.banned
+                };
+                showDashboard();
+                setCookie(COOKIE_NAME, pendingLogin.username, 30);
+                toast('✅ Hoş geldin ' + pendingLogin.username + '!');
+                codeBox.style.display = 'none';
+                addLog('Giriş yaptı: ' + pendingLogin.username);
+            } else {
+                toast('❌ ' + (verify.message || 'Yanlış doğrulama kodu'), 'error');
+            }
+        }
+
+        // ============ FORGOT PASSWORD ============
+        async function forgotPassword() {
+            var username = document.getElementById('forgotUser').value.trim();
+            if (!username) {
+                toast('❌ Kullanıcı adını yaz', 'error');
+                return;
+            }
+
+            var users = getUsers();
+            var user = users[username];
+            if (!user) {
+                toast('❌ Kullanıcı bulunamadı', 'error');
+                return;
+            }
+
+            var codeBox = document.getElementById('forgotCodeBox');
+            var passBox = document.getElementById('forgotNewPassBox');
+            var btn = document.getElementById('forgotBtn');
+
+            // Step 1: Send code
+            if (codeBox.style.display === 'none' && passBox.style.display === 'none') {
+                codeBox.style.display = 'block';
+                pendingForgot = {
+                    username: username,
+                    telegram: user.telegram
+                };
+                var result = await sendTelegramCode(user.telegram, username);
+                if (!result.success) {
+                    codeBox.style.display = 'none';
+                    return;
+                }
+                btn.textContent = '▸ KODU DOĞRULA';
+                return;
+            }
+
+            // Step 2: Verify code
+            if (codeBox.style.display === 'block' && passBox.style.display === 'none') {
+                var code = document.getElementById('forgotCode').value.trim();
+                var verify = await verifyCode(pendingForgot.username, code);
+                if (verify.success) {
+                    codeBox.style.display = 'none';
+                    passBox.style.display = 'block';
+                    btn.textContent = '▸ ŞİFREYİ DEĞİŞTİR';
+                    toast('✅ Kod doğru! Yeni şifreni gir');
+                } else {
+                    toast('❌ Yanlış kod', 'error');
+                }
+                return;
+            }
+
+            // Step 3: Change password
+            if (passBox.style.display === 'block') {
+                var newPass = document.getElementById('forgotNewPass').value.trim();
+                var newPass2 = document.getElementById('forgotNewPass2').value.trim();
+                if (!newPass || !newPass2) {
+                    toast('❌ Alanları doldur', 'error');
+                    return;
+                }
+                if (newPass !== newPass2) {
+                    toast('❌ Şifreler eşleşmiyor', 'error');
+                    return;
+                }
+                var users = getUsers();
+                users[pendingForgot.username].password = newPass;
+                saveUsers(users);
+                toast('✅ Şifre değiştirildi! Giriş yapabilirsin');
+                showLoginForm();
+                addLog('Şifre değiştirdi: ' + pendingForgot.username);
+            }
+        }
+
+        // ============ DASHBOARD ============
+        function showDashboard() {
+            document.getElementById('topbarMain').style.display = 'flex';
+            document.getElementById('authSection').classList.remove('active');
+            document.getElementById('apiSection').classList.add('active');
+
+            document.getElementById('topAvatar').textContent = currentUser.username[0].toUpperCase();
+            document.getElementById('topName').textContent = currentUser.username;
+
+            document.getElementById('sideAvatar').textContent = currentUser.username[0].toUpperCase();
+            document.getElementById('sideName').textContent = currentUser.username;
+
+            var roleEl = document.getElementById('sideRole');
+            roleEl.textContent = currentUser.role.toUpperCase();
+            roleEl.className = 'sidebar-role ' + currentUser.role;
+
+            if (currentUser.role === 'owner' || currentUser.role === 'admin') {
+                document.getElementById('adminMenuLink').style.display = 'flex';
+            }
+
+            updateNotifBadge();
+            updateFavCount();
+            updateUnreadMsgBadge();
+            renderAPIs();
+        }
+
+        function logout() {
+            currentUser = null;
+            deleteCookie(COOKIE_NAME);
+            document.getElementById('topbarMain').style.display = 'none';
+            document.getElementById('adminMenuLink').style.display = 'none';
+
+            var sections = document.querySelectorAll('.section');
+            sections.forEach(function(el) {
+                el.classList.remove('active');
+            });
+            document.getElementById('authSection').classList.add('active');
+            showLoginForm();
+        }
+
+        function updateFavCount() {
+            if (!currentUser) return;
+            var favs = getFav()[currentUser.username] || [];
+            document.getElementById('favCount').textContent = favs.length;
+        }
+
+        // ============ API RENDERING ============
+        function renderAPIs(filter) {
+            var grid = document.getElementById('apiGrid');
+            if (!currentUser) return;
+
+            var favs = getFav()[currentUser.username] || [];
+            var query = (filter || '').toLowerCase();
+
+            var filteredAPIs = API_LIST.filter(function(api) {
+                return api.name.toLowerCase().includes(query) ||
+                    api.desc.toLowerCase().includes(query);
+            });
+
+            var html = '';
+            for (var i = 0; i < filteredAPIs.length; i++) {
+                var api = filteredAPIs[i];
+                var isFav = favs.includes(api.id);
+
+                html += '<div class="api-card" id="card-' + api.id + '">';
+
+                if (api.maintenance) {
+                    html += '<div class="maintenance-badge">BAKIMDA</div>';
+                }
+
+                html += '<div class="api-header">';
+                html += '<div class="api-icon">' + api.name.split(' ')[0] + '</div>';
+                html += '<div class="api-name">' + api.name + '</div>';
+                html += '</div>';
+
+                html += '<div class="api-desc">' + api.desc + '</div>';
+
+                html += '<div class="api-url-box" onclick="copyToClipboard(\'' + api.url + '?' + api.param + '=...\')">skay-api.onrender.com/' + api.url + '?' + api.param + '=...</div>';
+
+                html += '<div class="api-input-row">';
+                html += '<input type="text" class="api-input" id="input-' + api.id + '" placeholder="' + api.placeholder + '" onkeydown="if(event.key===\'Enter\')executeAPI(\'' + api.id + '\')">';
+                html += '<button class="btn-run" id="btn-' + api.id + '" onclick="executeAPI(\'' + api.id + '\')">▶ ÇALIŞTIR</button>';
+                html += '</div>';
+
+                html += '<div class="api-result" id="result-' + api.id + '"><div class="cursor">> Hazır...</div></div>';
+
+                html += '<div class="api-actions">';
+                html += '<button class="btn-copy" onclick="copyToClipboard(\'' + api.url + '\')">📋 Link Kopyala</button>';
+                html += '<button class="btn-fav' + (isFav ? ' active' : '') + '" onclick="toggleFavorite(\'' + api.id + '\')">⭐</button>';
+                html += '</div>';
+
+                html += '</div>';
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function filterAPIs(query) {
+            renderAPIs(query);
+        }
+
+        function toggleFavorite(apiId) {
+            if (!currentUser) return;
+
+            var favs = getFav();
+            if (!favs[currentUser.username]) {
+                favs[currentUser.username] = [];
+            }
+
+            var index = favs[currentUser.username].indexOf(apiId);
+            if (index > -1) {
+                favs[currentUser.username].splice(index, 1);
+                toast('⭐ Favorilerden çıkarıldı');
+            } else {
+                favs[currentUser.username].push(apiId);
+                toast('⭐ Favorilere eklendi');
+            }
+
+            saveFav(favs);
+            updateFavCount();
+            renderAPIs();
+        }
+
+        // ============ EXECUTE API ============
+        async function executeAPI(apiId) {
+            var api = API_LIST.find(function(a) {
+                return a.id === apiId;
+            });
+            if (!api) return;
+
+            var input = document.getElementById('input-' + apiId);
+            var resultDiv = document.getElementById('result-' + apiId);
+            var btn = document.getElementById('btn-' + apiId);
+            var value = input.value.trim();
+
+            if (!value) {
+                toast('❌ Lütfen bir değer girin', 'error');
+                return;
+            }
+
+            resultDiv.classList.add('show');
+            resultDiv.innerHTML = '<div class="cursor">> Sorgulanıyor...</div>';
+            btn.disabled = true;
+            btn.textContent = '⏳';
+
+            try {
+                var url = 'https://skay-api.onrender.com/' + api.url + '?' + api.param + '=' + encodeURIComponent(value);
+                var response = await fetch(url);
+                var data = await response.text();
+                var display;
+                try {
+                    var json = JSON.parse(data);
+                    display = JSON.stringify(json, null, 2);
+                } catch (e) {
+                    display = data;
+                }
+                resultDiv.innerHTML = '<div style="color:#00ff41">> ✅ Sonuç:</div><pre style="color:#c0c0c0;white-space:pre-wrap;word-break:break-all;margin-top:8px">' + display.substring(0, 2000) + '</pre><div class="cursor">> Tamamlandı</div>';
+                addLog('API kullandı: ' + apiId + ' → ' + value.substring(0, 30));
+            } catch (e) {
+                resultDiv.innerHTML = '<div style="color:#ff1a1a">> ❌ Hata: ' + e.message + '</div><div class="cursor">> Başarısız</div>';
+            }
+
+            btn.disabled = false;
+            btn.textContent = '▶ ÇALIŞTIR';
+        }
+
+        // ============ PROFILE ============
+        function renderProfile() {
+            if (!currentUser) return;
+
+            document.getElementById('profileAvatar').textContent = currentUser.username[0].toUpperCase();
+            document.getElementById('profileName').textContent = currentUser.username;
+
+            var roleEl = document.getElementById('profileRole');
+            roleEl.textContent = currentUser.role.toUpperCase();
+            roleEl.className = 'sidebar-role ' + currentUser.role;
+
+            document.getElementById('profileTg').textContent = '📱 ' + (currentUser.telegram || 'Yok');
+        }
+
+        // ============ FAVORITES ============
+        function renderFavorites() {
+            if (!currentUser) return;
+
+            var favs = getFav()[currentUser.username] || [];
+            var grid = document.getElementById('favoritesGrid');
+
+            if (favs.length === 0) {
+                grid.innerHTML = '<p style="color:var(--text2);text-align:center;padding:40px;font-size:12px">Henüz favori yok.</p>';
+                return;
+            }
+
+            grid.className = 'api-grid';
+            var html = '';
+
+            for (var i = 0; i < favs.length; i++) {
+                var apiId = favs[i];
+                var api = API_LIST.find(function(a) {
+                    return a.id === apiId;
+                });
+                if (!api) continue;
+
+                html += '<div class="api-card">';
+                html += '<div class="api-header">';
+                html += '<div class="api-icon">' + api.name.split(' ')[0] + '</div>';
+                html += '<div class="api-name">' + api.name + '</div>';
+                html += '</div>';
+                html += '<div class="api-url-box" onclick="copyToClipboard(\'' + api.url + '\')">skay-api.onrender.com/' + api.url + '</div>';
+                html += '</div>';
+            }
+
+            grid.innerHTML = html;
+        }
+
+        // ============ MESSAGES ============
+        function renderMessages() {
+            if (!currentUser) return;
+
+            var msgs = getMsg()[currentUser.username] || [];
+            var list = document.getElementById('messagesList');
+
+            if (msgs.length === 0) {
+                list.innerHTML = '<p style="color:var(--text2);text-align:center;padding:40px;font-size:12px">Mesaj yok</p>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < msgs.length; i++) {
+                var m = msgs[i];
+                html += '<div class="msg-card">';
+                html += '<div class="msg-from">📩 Gönderen: <b>' + m.from + '</b></div>';
+                html += '<div class="msg-body">' + m.msg + '</div>';
+                html += '<div class="msg-time">' + m.time + '</div>';
+                html += '</div>';
+            }
+            list.innerHTML = html;
+        }
+
+        // ============ NOTIFICATIONS ============
+        function renderNotifications() {
+            var notifs = getNotif();
+            var list = document.getElementById('notifList');
+
+            if (notifs.length === 0) {
+                list.innerHTML = '<p style="padding:15px;text-align:center;color:var(--text2);font-size:11px">Bildirim yok</p>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < notifs.length; i++) {
+                var n = notifs[i];
+                html += '<div class="notif-item' + (n.read ? '' : ' unread') + '">';
+                html += '<div>' + n.msg + '</div>';
+                html += '<div class="notif-time">' + n.time + '</div>';
+                html += '</div>';
+            }
+            list.innerHTML = html;
+
+            // Mark all as read
+            var updated = getNotif();
+            for (var j = 0; j < updated.length; j++) {
+                updated[j].read = true;
+            }
+            saveNotif(updated);
+            updateNotifBadge();
+        }
+
+        // ============ ADMIN ============
+        function renderAdmin() {
+            var users = getUsers();
+            var logs = getLogs();
+            var html = '';
+
+            // Statistics
+            var totalUsers = Object.keys(users).length;
+            var bannedCount = Object.values(users).filter(function(u) { return u.banned; }).length;
+
+            html += '<div class="admin-card">';
+            html += '<h3>📊 İstatistikler</h3>';
+            html += '<p style="color:#fff;font-size:12px">Toplam Kullanıcı: <b>' + totalUsers + '</b> | Banlı: <b>' + bannedCount + '</b></p>';
+            html += '</div>';
+
+            // Announcement
+            html += '<div class="admin-card">';
+            html += '<h3>📢 Duyuru Gönder</h3>';
+            html += '<label>Duyuru Mesajı</label>';
+            html += '<textarea id="announceMsg" placeholder="Tüm kullanıcılara gönderilecek duyuru..."></textarea>';
+            html += '<button class="btn btn-cyan" style="width:100%" onclick="sendAnnounce()">📢 Gönder</button>';
+            html += '</div>';
+
+            // Private Message
+            html += '<div class="admin-card">';
+            html += '<h3>💬 Özel Mesaj</h3>';
+            html += '<label>Kullanıcı</label>';
+            html += '<input type="text" id="pmUser" placeholder="Kullanıcı adı">';
+            html += '<label>Mesaj</label>';
+            html += '<textarea id="pmMsg" placeholder="Özel mesaj..."></textarea>';
+            html += '<button class="btn btn-purple" style="width:100%" onclick="sendPM()">💬 Gönder</button>';
+            html += '</div>';
+
+            // Ban Management
+            html += '<div class="admin-card">';
+            html += '<h3>🔨 Ban Yönetimi</h3>';
+            html += '<label>Kullanıcı</label>';
+            html += '<input type="text" id="banUserInput" placeholder="Kullanıcı adı">';
+            html += '<div class="btn-row">';
+            html += '<button class="btn btn-red" onclick="banUser()">🚫 Banla</button>';
+            html += '<button class="btn btn-green" onclick="unbanUser()">✅ Ban Aç</button>';
+            html += '</div>';
+            html += '</div>';
+
+            // Add Admin
+            html += '<div class="admin-card">';
+            html += '<h3>👑 Admin Ekle</h3>';
+            html += '<label>Kullanıcı</label>';
+            html += '<input type="text" id="adminUserInput" placeholder="Kullanıcı adı">';
+            html += '<button class="btn btn-purple" style="width:100%" onclick="addAdmin()">👑 Admin Yap</button>';
+            html += '</div>';
+
+            // API Maintenance
+            html += '<div class="admin-card">';
+            html += '<h3>🔧 API Bakım</h3>';
+            html += '<select id="maintenanceApi">';
+            for (var i = 0; i < API_LIST.length; i++) {
+                var api = API_LIST[i];
+                html += '<option value="' + api.id + '">' + api.name + (api.maintenance ? ' (BAKIMDA)' : '') + '</option>';
+            }
+            html += '</select>';
+            html += '<button class="btn btn-red" style="width:100%" onclick="toggleMaintenance()">🔧 Bakıma Al / Çıkar</button>';
+            html += '</div>';
+
+            // User Table
+            html += '<div class="admin-card" style="grid-column:1/-1">';
+            html += '<h3>👥 Kullanıcı Listesi</h3>';
+            html += '<table class="user-table">';
+            html += '<tr><th>Kullanıcı</th><th>Rol</th><th>Telegram</th><th>Durum</th></tr>';
+
+            var userKeys = Object.keys(users);
+            for (var j = 0; j < userKeys.length; j++) {
+                var username = userKeys[j];
+                var data = users[username];
+                html += '<tr>';
+                html += '<td><b>' + username + '</b></td>';
+                html += '<td><span class="badge badge-' + data.role + '">' + data.role.toUpperCase() + '</span></td>';
+                html += '<td>' + (data.telegram || '-') + '</td>';
+                html += '<td>' + (data.banned ? '<span class="badge badge-banned">BANLI</span>' : '✅') + '</td>';
+                html += '</tr>';
+            }
+
+            html += '</table>';
+            html += '</div>';
+
+            document.getElementById('adminContent').innerHTML = html;
+        }
+
+        // ============ ADMIN ACTIONS ============
+        function sendAnnounce() {
+            var msg = document.getElementById('announceMsg').value.trim();
+            if (!msg) {
+                toast('❌ Mesaj yaz', 'error');
+                return;
+            }
+
+            var msgs = getMsg();
+            var users = getUsers();
+            var userKeys = Object.keys(users);
+
+            for (var i = 0; i < userKeys.length; i++) {
+                var username = userKeys[i];
+                if (!msgs[username]) {
+                    msgs[username] = [];
+                }
+                msgs[username].push({
+                    msg: msg,
+                    from: currentUser.username,
+                    time: new Date().toLocaleString()
+                });
+            }
+
+            saveMsg(msgs);
+            addNotification('📢 Duyuru: ' + msg);
+            toast('✅ Duyuru tüm kullanıcılara gönderildi!');
+            addLog('Duyuru gönderdi: ' + msg.substring(0, 50));
+            updateUnreadMsgBadge();
+        }
+
+        function sendPM() {
+            var username = document.getElementById('pmUser').value.trim();
+            var msg = document.getElementById('pmMsg').value.trim();
+
+            if (!username || !msg) {
+                toast('❌ Tüm alanları doldur', 'error');
+                return;
+            }
+
+            var users = getUsers();
+            if (!users[username]) {
+                toast('❌ Kullanıcı bulunamadı', 'error');
+                return;
+            }
+
+            var msgs = getMsg();
+            if (!msgs[username]) {
+                msgs[username] = [];
+            }
+            msgs[username].push({
+                msg: msg,
+                from: currentUser.username,
+                time: new Date().toLocaleString()
+            });
+
+            saveMsg(msgs);
+            addNotification('💬 ' + currentUser.username + ' sana mesaj gönderdi');
+            toast('✅ Mesaj gönderildi!');
+            addLog('Mesaj gönderdi: ' + username);
+
+            if (currentUser.username === username) {
+                updateUnreadMsgBadge();
+            }
+        }
+
+        function banUser() {
+            var username = document.getElementById('banUserInput').value.trim();
+            if (!username || !getUsers()[username] || username === 'TuncaySkay') {
+                toast('❌ Geçersiz işlem', 'error');
+                return;
+            }
+
+            var users = getUsers();
+            users[username].banned = true;
+            saveUsers(users);
+            toast('✅ ' + username + ' banlandı!');
+            addLog('Banladı: ' + username);
+            renderAdmin();
+        }
+
+        function unbanUser() {
+            var username = document.getElementById('banUserInput').value.trim();
+            if (!username || !getUsers()[username]) {
+                toast('❌ Kullanıcı bulunamadı', 'error');
+                return;
+            }
+
+            var users = getUsers();
+            users[username].banned = false;
+            saveUsers(users);
+            toast('✅ ' + username + ' banı açıldı!');
+            addLog('Ban açtı: ' + username);
+            renderAdmin();
+        }
+
+        function addAdmin() {
+            var username = document.getElementById('adminUserInput').value.trim();
+            if (!username || !getUsers()[username]) {
+                toast('❌ Kullanıcı bulunamadı', 'error');
+                return;
+            }
+
+            var users = getUsers();
+            users[username].role = 'admin';
+            saveUsers(users);
+            toast('✅ ' + username + ' admin yapıldı!');
+            addLog('Admin ekledi: ' + username);
+            renderAdmin();
+        }
+
+        function toggleMaintenance() {
+            var apiId = document.getElementById('maintenanceApi').value;
+            var api = API_LIST.find(function(a) {
+                return a.id === apiId;
+            });
+
+            if (api) {
+                api.maintenance = !api.maintenance;
+                var status = api.maintenance ? 'a alındı' : 'dan çıkarıldı';
+                toast('✅ ' + api.name + ' bakım ' + status);
+                addLog('API bakım: ' + apiId + ' - ' + status);
+                renderAPIs();
+                renderAdmin();
+            }
+        }
+
+        // ============ AUTO LOGIN ============
+        var savedCookie = getCookie(COOKIE_NAME);
+        if (savedCookie) {
+            var users = getUsers();
+            if (users[savedCookie] && !users[savedCookie].banned) {
+                currentUser = {
+                    username: savedCookie,
+                    password: users[savedCookie].password,
+                    telegram: users[savedCookie].telegram,
+                    role: users[savedCookie].role,
+                    banned: users[savedCookie].banned
+                };
+                showDashboard();
+            }
+        }
+
+        // ============ INIT ============
+        showLoginForm();
+        updateNotifBadge();
+        updateUnreadMsgBadge();
+    </script>
+</body>
+</html>
